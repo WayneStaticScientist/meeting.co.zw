@@ -168,7 +168,7 @@ export default function MeetingRoomView({}: {}) {
         <div className="flex-1 flex flex-col p-4 relative transition-all duration-300">
           {/* Top Floating Participants Strip */}
           <div className="h-32 mb-4 w-full flex gap-4 overflow-x-auto hide-scrollbar z-10 px-2">
-            <div className="min-w-[200px] h-full bg-zinc-900 rounded-2xl border border-zinc-800 relative overflow-hidden group">
+            <div className="min-w-50 h-full bg-zinc-900 rounded-2xl border border-zinc-800 relative overflow-hidden group">
               {camOn ? (
                 <img
                   src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400"
@@ -191,7 +191,7 @@ export default function MeetingRoomView({}: {}) {
             {participants.map((p) => (
               <div
                 key={p.id}
-                className="min-w-[200px] h-full bg-zinc-900 rounded-2xl border border-zinc-800 relative overflow-hidden"
+                className="min-w-50 h-full bg-zinc-900 rounded-2xl border border-zinc-800 relative overflow-hidden"
               >
                 <img
                   src={p.avatar}

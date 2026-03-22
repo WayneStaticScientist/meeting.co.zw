@@ -78,7 +78,7 @@ export default function App() {
             <Video className="text-white" size={20} fill="currentColor" />
           </div>
           <span className="text-xl font-black tracking-tighter uppercase text-emerald-600">
-            GoMeeting
+            ZanuPFMeeting
           </span>
         </div>
 
@@ -288,7 +288,7 @@ export default function App() {
               </div>
 
               <div className="space-y-8">
-                <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-emerald-600/20">
+                <div className="bg-linear-to-br from-emerald-600 to-emerald-800 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-emerald-600/20">
                   <div className="relative z-10">
                     <h3 className="text-emerald-100 text-xs font-black uppercase tracking-widest mb-4">
                       Meeting Usage
@@ -570,7 +570,7 @@ function ModalWrapper({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 overflow-hidden">
       <div
         className="absolute inset-0 bg-zinc-950/80 backdrop-blur-xl"
         onClick={onClose}

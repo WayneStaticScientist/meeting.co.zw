@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 /**
- * GoMeet Modern 404 Not Found Screen
+ * ZanuPFMeet Modern 404 Not Found Screen
  * Featuring:
  * 1. Animated Glitch effects for the "404" text
  * 2. Floating 3D-transformed glassmorphism card
@@ -80,7 +80,7 @@ const NotFoundPage = () => {
             <motion.h1
               variants={glitchVariants}
               animate="animate"
-              className="text-[12rem] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-emerald-400 to-emerald-700 opacity-20 select-none"
+              className="text-[12rem] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-linear-to-b from-emerald-400 to-emerald-700 opacity-20 select-none"
             >
               404
             </motion.h1>
@@ -176,7 +176,7 @@ const NotFoundPage = () => {
       {/* Decorative Brand Tag */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 opacity-30 select-none">
         <span className="text-xs tracking-[0.4em] font-black uppercase text-emerald-500">
-          GoMeet Presence
+          ZanuPFMeet Presence
         </span>
       </div>
     </div>

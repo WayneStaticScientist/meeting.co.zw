@@ -18,23 +18,13 @@ import {
   Monitor,
   ShieldCheck,
 } from "lucide-react";
+import LoginLayout from "@/components/layouts/login-layout";
+import SignUpLayout from "@/components/layouts/sign-up-layout";
 
 export default function App() {
-  const [isVisible, setIsVisible] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
 
-  const toggleVisibility = () => setIsVisible(!isVisible);
-
   // Sample data for Country Select
-  const countries = [
-    "United States",
-    "United Kingdom",
-    "Canada",
-    "Australia",
-    "Germany",
-    "France",
-    "Japan",
-  ];
 
   return (
     <div className="min-h-screen w-full bg-emerald-50 dark:bg-zinc-950 flex items-center justify-center p-4 md:p-8 font-sans transition-colors duration-300 relative overflow-hidden">
@@ -59,7 +49,7 @@ export default function App() {
       </div>
 
       <div className="w-full max-w-250 shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/70 dark:bg-zinc-900/80 backdrop-blur-2xl border border-emerald-100 dark:border-zinc-800 flex flex-col lg:flex-row">
-        {/* Left Side: GoMeeting Visual Branding */}
+        {/* Left Side: ZanuPFMeeting Visual Branding */}
         <div className="hidden lg:flex w-[42%] bg-emerald-600 p-12 flex-col justify-between text-white relative overflow-hidden">
           <div className="z-10">
             <div className="flex items-center gap-3 mb-12">
@@ -71,7 +61,7 @@ export default function App() {
                 />
               </div>
               <span className="text-2xl font-black tracking-tighter uppercase">
-                GoMeeting
+                ZanuPFMeeting
               </span>
             </div>
 
@@ -110,15 +100,12 @@ export default function App() {
                     key={i}
                     className="h-10 w-10 rounded-full border-2 border-emerald-600 bg-zinc-200 overflow-hidden"
                   >
-                    <img
-                      src={`https://i.pravatar.cc/150?u=${i + 10}`}
-                      alt="user"
-                    />
+                    <div className="h-1" />
                   </div>
                 ))}
               </div>
               <p className="text-xs font-bold uppercase tracking-wider text-emerald-100">
-                5M+ Minutes daily
+                Stream Way
               </p>
             </div>
           </div>
@@ -147,286 +134,9 @@ export default function App() {
               </button>
             </div>
 
-            {activeTab === "login" ? (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="mb-8">
-                  <h1 className="text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
-                    Welcome Back
-                  </h1>
-                  <p className="text-zinc-500 mt-2 font-medium">
-                    Ready for your next big meeting?
-                  </p>
-                </div>
+            {activeTab === "login" ? <LoginLayout /> : <SignUpLayout />}
 
-                <form
-                  className="space-y-5"
-                  onSubmit={(e) => e.preventDefault()}
-                >
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                      Work Email
-                    </label>
-                    <div className="relative group">
-                      <Mail
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-emerald-500 transition-colors"
-                        size={18}
-                      />
-                      <input
-                        type="email"
-                        placeholder="you@company.com"
-                        className="w-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl py-3.5 pl-12 pr-4 outline-none focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                      Secure Password
-                    </label>
-                    <div className="relative group">
-                      <Lock
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-emerald-500 transition-colors"
-                        size={18}
-                      />
-                      <input
-                        type={isVisible ? "text" : "password"}
-                        placeholder="••••••••"
-                        className="w-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl py-3.5 pl-12 pr-12 outline-none focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
-                      />
-                      <button
-                        type="button"
-                        onClick={toggleVisibility}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-emerald-600"
-                      >
-                        {isVisible ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1">
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                      <div className="relative">
-                        <input type="checkbox" className="peer sr-only" />
-                        <div className="w-5 h-5 border-2 border-zinc-200 dark:border-zinc-700 rounded-lg peer-checked:bg-emerald-600 peer-checked:border-emerald-600 transition-all" />
-                        <svg
-                          className="absolute top-1 left-1 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="4"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                      <span className="text-sm font-semibold text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300">
-                        Keep me synced
-                      </span>
-                    </label>
-                    <a
-                      href="#"
-                      className="text-sm font-bold text-red-500 hover:text-red-600 hover:underline"
-                    >
-                      Forgot?
-                    </a>
-                  </div>
-
-                  <button className="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-700 active:scale-[0.98] transition-all shadow-xl shadow-emerald-600/20">
-                    Start Meeting
-                    <ChevronRight size={18} />
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="mb-8">
-                  <h1 className="text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
-                    Get Started
-                  </h1>
-                  <p className="text-zinc-500 mt-2 font-medium">
-                    The professional way to meet online.
-                  </p>
-                </div>
-
-                <form
-                  className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5"
-                  onSubmit={(e) => e.preventDefault()}
-                >
-                  {/* Full Name */}
-                  <div className="md:col-span-2 space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                      Your Name
-                    </label>
-                    <div className="relative group">
-                      <User
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                        size={18}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Alex Rivera"
-                        className="w-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Email & Phone */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                      Email
-                    </label>
-                    <div className="relative">
-                      <Mail
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                        size={18}
-                      />
-                      <input
-                        type="email"
-                        placeholder="alex@go.com"
-                        className="w-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                      Phone
-                    </label>
-                    <div className="relative">
-                      <Phone
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                        size={18}
-                      />
-                      <input
-                        type="tel"
-                        placeholder="+1 (555) 000-0000"
-                        className="w-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Country & City */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                      Region
-                    </label>
-                    <div className="relative">
-                      <Globe
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                        size={18}
-                      />
-                      <select className="w-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100 appearance-none">
-                        <option value="">Global Server</option>
-                        {countries.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                      Office Location
-                    </label>
-                    <div className="relative">
-                      <MapPin
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                        size={18}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Remote"
-                        className="w-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
-                      />
-                    </div>
-                  </div>
-
-                  {/* ID & DOB */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                      Verify Account ID
-                    </label>
-                    <div className="relative">
-                      <IdCard
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                        size={18}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Optional"
-                        className="w-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                      Birth Date
-                    </label>
-                    <div className="relative">
-                      <Calendar
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                        size={18}
-                      />
-                      <input
-                        type="date"
-                        className="w-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Password */}
-                  <div className="md:col-span-2 space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">
-                      Create Password
-                    </label>
-                    <div className="relative group">
-                      <Lock
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-emerald-500 transition-colors"
-                        size={18}
-                      />
-                      <input
-                        type={isVisible ? "text" : "password"}
-                        placeholder="Min 8 characters"
-                        className="w-full bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl py-3 pl-12 pr-12 outline-none focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
-                      />
-                      <button
-                        type="button"
-                        onClick={toggleVisibility}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-emerald-600"
-                      >
-                        {isVisible ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2 mt-4 bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-2xl border border-yellow-200 dark:border-yellow-800/30">
-                    <label className="flex items-start gap-3 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        className="mt-1 w-4 h-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
-                      />
-                      <span className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                        I agree to{" "}
-                        <span className="font-bold text-emerald-600">
-                          GoMeeting Premium
-                        </span>{" "}
-                        Terms of Service and data protection policies.
-                      </span>
-                    </label>
-                  </div>
-
-                  <button className="md:col-span-2 w-full bg-emerald-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-700 active:scale-[0.98] transition-all mt-4 shadow-xl shadow-emerald-600/20">
-                    Create Workspace
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* Social Login */}
-            <div className="mt-10">
+            {/* <div className="mt-10">
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-px flex-1 bg-zinc-100 dark:bg-zinc-800" />
                 <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-black">
@@ -462,7 +172,7 @@ export default function App() {
                   GitHub
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -474,7 +184,7 @@ export default function App() {
           All Systems Online
         </span>
         <a href="#" className="hover:text-emerald-600 transition-colors">
-          GoMeeting Support
+          ZanuPFMeeting Support
         </a>
       </div>
     </div>

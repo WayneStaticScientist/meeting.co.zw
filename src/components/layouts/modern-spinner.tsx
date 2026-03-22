@@ -129,7 +129,7 @@ export const ZanuPFMeetSpinner = () => {
             animate={{ opacity: 1 }}
             className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-slate-400"
           >
-            GoMeet
+            ZanuPFMeet
           </motion.h1>
 
           <div className="h-6 overflow-hidden">
