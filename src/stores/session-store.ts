@@ -69,13 +69,13 @@ export const useSessionState = create<User & UserActions>()(
       });
       try {
         const response = await api.post("/users/tokens", get());
-        console.log(response);
         const { accessToken, refreshToken, user } = response.data;
         UserStore.setTokens(accessToken, refreshToken);
         UserStore.setUser(user);
         set((state) => {
           state.verifiedSession = true;
         });
+        set({ ...user });
       } catch (e) {
         Toaster.errorHttp(e);
       } finally {

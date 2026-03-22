@@ -10,26 +10,16 @@ import {
   LogOut,
   Bell,
   Search,
-  MoreVertical,
-  ChevronRight,
-  Mic,
-  MicOff,
   Monitor,
   LayoutGrid,
   History,
   Menu,
   X,
-  Play,
-  Camera,
-  CameraOff,
-  Globe,
-  Lock,
-  ChevronDown,
-  Hash,
-  Link,
-  ShieldCheck,
   Check,
 } from "lucide-react";
+import NewMeetingModal from "@/components/layouts/new-meeting-modal";
+import JoinMeetingModal from "@/components/layouts/join-meeting-modal";
+import ScheduleMeetingModal from "@/components/layouts/schedule-meeting-modal";
 
 export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -41,8 +31,7 @@ export default function App() {
   >(null);
 
   // Meeting Setup State
-  const [isMicOn, setIsMicOn] = useState(true);
-  const [isCameraOn, setIsCameraOn] = useState(true);
+
   const [meetingId, setMeetingId] = useState("");
 
   // Mock data for upcoming meetings
@@ -314,271 +303,20 @@ export default function App() {
       {/* --- MODALS SECTION --- */}
 
       {/* 1. New Meeting Modal */}
-      {activeModal === "new" && (
-        <ModalWrapper onClose={closeModal}>
-          <div className="relative w-full max-w-5xl bg-white dark:bg-zinc-900 rounded-[3rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col lg:flex-row animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 max-h-[90vh]">
-            <button
-              onClick={closeModal}
-              className="absolute top-6 right-6 p-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 rounded-full transition-colors z-10"
-            >
-              <X size={20} />
-            </button>
-            <div className="lg:w-[55%] p-6 md:p-10 flex flex-col bg-zinc-50 dark:bg-zinc-800/30">
-              <h2 className="text-2xl font-black tracking-tight mb-2">
-                Setup Room
-              </h2>
-              <div className="relative aspect-video rounded-3xl bg-zinc-900 overflow-hidden shadow-2xl">
-                {isCameraOn ? (
-                  <img
-                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800"
-                    className="w-full h-full object-cover opacity-80"
-                    alt="Preview"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-zinc-500">
-                    <CameraOff size={40} />
-                  </div>
-                )}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4">
-                  <button
-                    onClick={() => setIsMicOn(!isMicOn)}
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isMicOn ? "bg-white/20" : "bg-red-500"}`}
-                  >
-                    <Mic size={20} />
-                  </button>
-                  <button
-                    onClick={() => setIsCameraOn(!isCameraOn)}
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isCameraOn ? "bg-white/20" : "bg-red-500"}`}
-                  >
-                    <Camera size={20} />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 p-10 flex flex-col justify-between pt-16 lg:pt-10">
-              <div>
-                <h3 className="text-3xl font-black mb-8">Meeting Details</h3>
-                <input
-                  type="text"
-                  placeholder="Room Name"
-                  className="w-full bg-zinc-100 dark:bg-zinc-800 border-none rounded-2xl p-4 font-bold"
-                  defaultValue="Alex's Project Sync"
-                />
-              </div>
-              <button className="w-full bg-emerald-600 text-white font-black py-5 rounded-[1.5rem] mt-10 hover:bg-emerald-700 transition-all">
-                Launch Meeting Room
-              </button>
-            </div>
-          </div>
-        </ModalWrapper>
-      )}
+      {activeModal === "new" && <NewMeetingModal closeModal={closeModal} />}
 
       {/* 2. Join Meeting Modal */}
-      {activeModal === "join" && (
-        <ModalWrapper onClose={closeModal}>
-          <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-[3rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 p-8 md:p-12 animate-in zoom-in-95 duration-300">
-            <button
-              onClick={closeModal}
-              className="absolute top-6 right-6 p-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-500 rounded-full transition-colors z-10"
-            >
-              <X size={20} />
-            </button>
-            <div className="text-center space-y-4 mb-10">
-              <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/10">
-                <Hash size={32} />
-              </div>
-              <h2 className="text-3xl font-black tracking-tight">
-                Join Meeting
-              </h2>
-              <p className="text-zinc-500 font-medium">
-                Enter the meeting ID or link to join the session
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">
-                  Meeting Identifier
-                </label>
-                <div className="relative">
-                  <Link
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                    size={18}
-                  />
-                  <input
-                    type="text"
-                    placeholder="ABC-DEFG-HIJ"
-                    onChange={(e) => setMeetingId(e.target.value)}
-                    className="w-full bg-zinc-100 dark:bg-zinc-800 border-2 border-transparent focus:border-emerald-500 rounded-2xl py-4 pl-12 pr-4 outline-none font-bold text-center tracking-widest uppercase"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl">
-                <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white">
-                  <ShieldCheck size={20} />
-                </div>
-                <p className="text-xs font-bold text-zinc-500">
-                  Encrypted end-to-end meeting
-                </p>
-              </div>
-
-              <button
-                disabled={!meetingId}
-                className="w-full bg-emerald-600 disabled:opacity-50 text-white font-black py-5 rounded-[1.5rem] flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 active:scale-95 transition-all"
-              >
-                Connect to Room
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          </div>
-        </ModalWrapper>
-      )}
+      {activeModal === "join" && <JoinMeetingModal closeModal={closeModal} />}
 
       {/* 3. Schedule Meeting Screen */}
       {activeModal === "schedule" && (
-        <ModalWrapper onClose={closeModal}>
-          <div className="relative w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-[3rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row overflow-hidden animate-in slide-in-from-bottom-20 duration-500 h-[90vh]">
-            <button
-              onClick={closeModal}
-              className="absolute top-6 right-6 p-2 bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-600 dark:text-zinc-300 rounded-full transition-colors z-20"
-            >
-              <X size={20} />
-            </button>
-            {/* Left: Settings */}
-            <div className="flex-1 p-8 md:p-12 overflow-y-auto">
-              <h2 className="text-3xl font-black mb-10">Schedule Event</h2>
-
-              <div className="space-y-8">
-                <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-400">
-                    Meeting Title
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Design Review..."
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl p-4 font-bold outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-zinc-400">
-                      Date
-                    </label>
-                    <div className="relative">
-                      <Calendar
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                        size={18}
-                      />
-                      <input
-                        type="date"
-                        className="w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl p-4 pl-12 font-bold outline-none"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-zinc-400">
-                      Time
-                    </label>
-                    <div className="relative">
-                      <Clock
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                        size={18}
-                      />
-                      <input
-                        type="time"
-                        className="w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl p-4 pl-12 font-bold outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-400">
-                    Duration
-                  </label>
-                  <div className="flex gap-3">
-                    {["15m", "30m", "1h", "2h"].map((d) => (
-                      <button
-                        key={d}
-                        className={`flex-1 py-3 rounded-xl text-xs font-black border-2 transition-all ${d === "1h" ? "bg-emerald-600 border-emerald-600 text-white" : "bg-zinc-50 dark:bg-zinc-800 border-transparent text-zinc-400 hover:border-zinc-200"}`}
-                      >
-                        {d}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: Guest List */}
-            <div className="w-full md:w-80 bg-zinc-50 dark:bg-zinc-800/50 p-8 pt-16 md:pt-8 border-l border-zinc-100 dark:border-zinc-800 flex flex-col relative">
-              <h3 className="text-lg font-black mb-6">Invite Guests</h3>
-              <div className="relative mb-6">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
-                  size={16}
-                />
-                <input
-                  type="text"
-                  placeholder="Name or email"
-                  className="w-full bg-white dark:bg-zinc-900 border-none rounded-xl py-2.5 pl-10 text-xs font-medium"
-                />
-              </div>
-
-              <div className="flex-1 space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-zinc-200 overflow-hidden">
-                        <img
-                          src={`https://i.pravatar.cc/100?u=${i}`}
-                          alt="user"
-                        />
-                      </div>
-                      <p className="text-xs font-bold">User {i}</p>
-                    </div>
-                    <button className="p-1.5 text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                      <Plus size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={closeModal}
-                className="w-full bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white font-black py-4 rounded-2xl mt-8 shadow-xl shadow-zinc-900/20 flex items-center justify-center gap-2"
-              >
-                Confirm Event
-                <Check size={18} />
-              </button>
-            </div>
-          </div>
-        </ModalWrapper>
+        <ScheduleMeetingModal closeModal={closeModal} />
       )}
     </div>
   );
 }
 
 // Utility Layout Components
-function ModalWrapper({
-  children,
-  onClose,
-}: {
-  children: React.ReactNode;
-  onClose: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 overflow-hidden">
-      <div
-        className="absolute inset-0 bg-zinc-950/80 backdrop-blur-xl"
-        onClick={onClose}
-      />
-      <div className="relative w-full flex justify-center">{children}</div>
-    </div>
-  );
-}
 
 function NavItem({
   icon,

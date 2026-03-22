@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import { useSessionState } from "@/stores/session-store";
 import { ZanuPFMeetSpinner } from "@/components/layouts/modern-spinner";
+import { SocketProvider } from "@/providers/socket-provider";
 
 export default function RootLayout({
   children,
@@ -14,5 +15,9 @@ export default function RootLayout({
   }, []);
 
   if (!session.verifiedSession) return <ZanuPFMeetSpinner />;
-  return <React.Fragment>{children}</React.Fragment>;
+  return (
+    <React.Fragment>
+      <SocketProvider> {children}</SocketProvider>
+    </React.Fragment>
+  );
 }

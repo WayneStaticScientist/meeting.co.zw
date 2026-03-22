@@ -1,4 +1,5 @@
 export interface User {
+  _id: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -11,6 +12,7 @@ export interface User {
 }
 
 const initialUserState: User = {
+  _id: "",
   email: "",
   firstName: "",
   lastName: "",
