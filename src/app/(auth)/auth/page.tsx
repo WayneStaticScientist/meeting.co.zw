@@ -38,13 +38,10 @@ export default function App() {
           <div className="z-10">
             <div className="flex items-center gap-3 mb-12">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-900/20">
-                <Image
+                <img
                   src={"/zanu.jpg"}
-                  className="text-emerald-600 w-44 h-44 rounded-full object-cover lg:w-72 lg:h-72"
-                  width={120}
-                  height={120}
+                  className="text-emerald-600  rounded-full! object-cover! "
                   alt="ZanuPFMeeting"
-                  priority
                 />
               </div>
               <span className="text-2xl font-black tracking-tighter uppercase">
@@ -54,7 +51,7 @@ export default function App() {
 
             <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight mb-6">
               Connect. <span className="text-yellow-300">Collaborate.</span>{" "}
-              <span className="text-red-300">Celebrate.</span>
+              <span className="text-black">Celebrate.</span>
             </h2>
 
             <div className="space-y-6 mt-8">
