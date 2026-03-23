@@ -6,16 +6,27 @@ import { immer } from "zustand/middleware/immer";
 import { Participant } from "@/types/participant";
 
 export const useMeetingStore = create<{
-  meeting?: Meeting;
+  meeting?: Meeting | null;
+  leaving: boolean;
   loading: boolean;
+  meetings: Meeting[];
+  leaveMeeting: () => void;
   currentAdmissionId: string;
-  admitParticipant: (participant: Participant) => Promise<string | undefined>;
   fetchMeeting: (id: string) => void;
+  fetchMeetings: (page: number) => void;
+  admitParticipant: (participant: Participant) => Promise<string | undefined>;
 }>()(
-  immer((set) => ({
+  immer((set, get) => ({
     meeting: undefined,
     loading: false,
+    leaving: false,
     currentAdmissionId: "",
+    meetings: [],
+    updateParticipants: (participants: Participant[]) => {
+      set((state) => {
+        state.meeting!.participants = participants;
+      });
+    },
     fetchMeeting: async (meetingId?: string) => {
       if (!meetingId) return;
       set((state) => {
@@ -60,6 +71,45 @@ export const useMeetingStore = create<{
       } finally {
         set((state) => {
           state.currentAdmissionId = "";
+        });
+      }
+    },
+    closeMeeting: async () => {
+      Toaster.success("meeting closed");
+      set((state) => {
+        state.meeting = null;
+      });
+    },
+    leaveMeeting: async () => {
+      if (!get().meeting) return;
+      try {
+        set((state) => {
+          state.leaving = true;
+        });
+        await api.delete("/meetings/" + get().meeting?.meetingCode);
+        set((state) => {
+          state.leaving = false;
+          state.meeting = null;
+        });
+      } catch (e) {
+        set((state) => {
+          state.leaving = false;
+        });
+      }
+    },
+    fetchMeetings: async (page = 1) => {
+      try {
+        set((state) => {
+          state.loading = true;
+        });
+        const response = await api.get("/meetings/all?page=" + page);
+        set((state) => {
+          state.meetings = response.data.meetings;
+          state.loading = false;
+        });
+      } catch (e) {
+        set((state) => {
+          state.loading = false;
         });
       }
     },

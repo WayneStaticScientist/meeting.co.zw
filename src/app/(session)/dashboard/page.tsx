@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Video,
   Plus,
@@ -14,50 +14,34 @@ import {
   LayoutGrid,
   History,
   Menu,
-  X,
-  Check,
 } from "lucide-react";
 import NewMeetingModal from "@/components/layouts/new-meeting-modal";
 import JoinMeetingModal from "@/components/layouts/join-meeting-modal";
 import ScheduleMeetingModal from "@/components/layouts/schedule-meeting-modal";
+import { useMeetingStore } from "@/stores/meeting-store";
+import { Lerper } from "@/utils/lerper";
+import ZLoader from "@/components/displays/z-loader";
+import { Meeting } from "@/types/meeting";
+import { useSessionState } from "@/stores/session-store";
 
 export default function App() {
+  const meetingStore = useMeetingStore();
+  const sessionState = useSessionState();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
-
   // Modals Control State
   const [activeModal, setActiveModal] = useState<
     null | "new" | "join" | "schedule"
   >(null);
-
+  useEffect(() => {
+    meetingStore.fetchMeetings(1);
+  }, []);
   // Meeting Setup State
-
-  const [meetingId, setMeetingId] = useState("");
-
-  // Mock data for upcoming meetings
-  const upcomingMeetings = [
-    {
-      id: 1,
-      title: "Design System Sync",
-      time: "10:30 AM - 11:30 AM",
-      organizer: "Sarah Jenkins",
-      participants: 12,
-      status: "Starting soon",
-      color: "emerald",
-    },
-    {
-      id: 2,
-      title: "Q4 Strategy Planning",
-      time: "02:00 PM - 03:30 PM",
-      organizer: "Michael Chen",
-      participants: 5,
-      status: "Scheduled",
-      color: "zinc",
-    },
-  ];
-
   const closeModal = () => setActiveModal(null);
-
+  const activeMeetings = meetingStore.meetings.reduce(
+    (prev, e) => (e.status == "Active" ? prev + 1 : 0),
+    0,
+  );
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 flex overflow-hidden">
       {/* Sidebar - Desktop */}
@@ -145,13 +129,15 @@ export default function App() {
             </button>
             <div className="flex items-center gap-3 pl-4 border-l border-zinc-200 dark:border-zinc-800">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold">Alex Rivera</p>
+                <p className="text-sm font-bold">
+                  {sessionState.firstName} {sessionState.lastName}
+                </p>
                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                  Pro Account
+                  {sessionState.email}
                 </p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-emerald-100 border-2 border-emerald-500 overflow-hidden shadow-inner">
-                <img src="https://i.pravatar.cc/150?u=alex" alt="profile" />
+              <div className="w-10 h-10 rounded-full bg-emerald-100 border-2 border-emerald-500 overflow-hidden shadow-inner flex items-center justify-center">
+                <div>{sessionState.firstName[0]}</div>
               </div>
             </div>
           </div>
@@ -165,12 +151,9 @@ export default function App() {
                   Meeting Dashboard
                 </h1>
                 <p className="text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
-                  Welcome back, Alex. You have 3 meetings today.
+                  Welcome back, {sessionState.firstName}. You have{" "}
+                  {activeMeetings} meetings today.
                 </p>
-              </div>
-              <div className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 px-4 py-2 rounded-2xl text-xs font-bold border border-yellow-200 dark:border-yellow-800/30">
-                <Clock size={14} />
-                Next: Design System Sync in 12 mins
               </div>
             </div>
 
@@ -231,48 +214,64 @@ export default function App() {
                 </div>
 
                 <div className="space-y-4">
-                  {upcomingMeetings.map((meeting) => (
-                    <div
-                      key={meeting.id}
-                      className="group relative bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-xl hover:shadow-emerald-600/5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div
-                          className={`w-14 h-14 rounded-2xl flex items-center justify-center ${meeting.color === "emerald" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"}`}
-                        >
-                          <Calendar size={24} />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-lg group-hover:text-emerald-600 transition-colors">
-                            {meeting.title}
-                          </h4>
-                          <div className="flex items-center gap-3 text-sm text-zinc-500 font-medium mt-1">
-                            <span className="flex items-center gap-1">
-                              <Clock size={14} /> {meeting.time}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Users size={14} /> {meeting.participants} joined
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                  {Lerper.lerp(
+                    meetingStore.loading,
+                    <ZLoader />,
+                    Lerper.lerp(
+                      meetingStore.meetings.length == 0,
+                      <>No Meetings at the Moment</>,
+                      <>
+                        {meetingStore.meetings.map((meeting: Meeting, id) => (
+                          <div
+                            key={id}
+                            className="group relative bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-xl hover:shadow-emerald-600/5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                          >
+                            <div className="flex items-start gap-4">
+                              <div
+                                className={`w-14 h-14 rounded-2xl flex items-center justify-center ${meeting.status === "Active" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"}`}
+                              >
+                                <Calendar size={24} />
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-lg group-hover:text-emerald-600 transition-colors">
+                                  {meeting.roomName}
+                                </h4>
+                                <div className="flex items-center gap-3 text-sm text-zinc-500 font-medium mt-1">
+                                  <span className="flex items-center gap-1">
+                                    <Clock size={14} /> {meeting.createdAt}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Users size={14} />{" "}
+                                    {meeting.participants.length} joined
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-zinc-50 dark:border-zinc-800">
-                        {meeting.color === "emerald" && (
-                          <div className="px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full animate-pulse">
-                            Live Now
+                            <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-zinc-50 dark:border-zinc-800">
+                              {meeting.status === "Active" && (
+                                <div className="px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full animate-pulse">
+                                  Live Now
+                                </div>
+                              )}
+                              <button
+                                onClick={() => {
+                                  if (meeting.status === "Active" && window) {
+                                    window.location.href = `/meeting/${meeting.meetingCode}`;
+                                  }
+                                }}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${meeting.status === "Active" ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"}`}
+                              >
+                                {meeting.status === "Active"
+                                  ? "Join Call"
+                                  : "Details"}
+                              </button>
+                            </div>
                           </div>
-                        )}
-                        <button
-                          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${meeting.color === "emerald" ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"}`}
-                        >
-                          {meeting.color === "emerald"
-                            ? "Join Call"
-                            : "Details"}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                        ))}
+                      </>,
+                    ),
+                  )}
                 </div>
               </div>
 
@@ -280,16 +279,18 @@ export default function App() {
                 <div className="bg-linear-to-br from-emerald-600 to-emerald-800 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-emerald-600/20">
                   <div className="relative z-10">
                     <h3 className="text-emerald-100 text-xs font-black uppercase tracking-widest mb-4">
-                      Meeting Usage
+                      Meeting
                     </h3>
                     <div className="flex items-end gap-2 mb-2">
-                      <span className="text-4xl font-black">24.5</span>
+                      <span className="text-4xl font-black">
+                        {meetingStore.meetings.length}
+                      </span>
                       <span className="text-emerald-200 text-lg font-bold pb-1">
-                        hrs
+                        Meetings
                       </span>
                     </div>
                     <p className="text-emerald-200 text-sm font-medium">
-                      Your total time in meetings this month
+                      In Total
                     </p>
                   </div>
                   <div className="absolute top-[-20%] right-[-20%] w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none" />

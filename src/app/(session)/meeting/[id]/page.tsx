@@ -1,18 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import {
-  Video,
-  Users,
-  Settings,
-  Mic,
-  MicOff,
-  Monitor,
   LayoutGrid,
   X,
-  CameraOff,
   ShieldCheck,
-  MessageSquare,
-  PhoneOff,
   PenTool,
   Send,
   Pencil,
@@ -24,29 +15,25 @@ import { useParams } from "next/navigation";
 import { Chats, useMessages } from "@/stores/chats-store";
 import { useSocket } from "@/providers/socket-provider";
 import { useMeetingStore } from "@/stores/meeting-store";
-import { useSessionState } from "@/stores/session-store";
 import { useJoinMeetingHook } from "@/hooks/join-meeting-hook";
 import { ZMeetLoader } from "@/components/loaders/meeting-loader";
-import { useWaitingListStore } from "@/stores/waiting-list-store";
 import MeetingChatsLayout from "@/components/meeting/meeting-chats-layout";
 import MeetingWaitingRoom from "@/components/meeting/meeting-waiting-room";
 import MeetingParticipants from "@/components/meeting/meeting-participants-layout";
 import { toast } from "@heroui/react";
+import BottomControls from "@/components/meeting/bottom-controls";
+import { MeetingControlsHook } from "@/hooks/meeting-controls-hook";
 
 export default function MeetingRoom() {
   const params = useParams();
-  const session = useSessionState();
+  const {} = useJoinMeetingHook();
   const { addMessage } = useMessages();
-  const waiters = useWaitingListStore();
   const meetingStore = useMeetingStore();
-  const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
   const { socket, isConnected } = useSocket();
-  const joinMeetingHook = useJoinMeetingHook();
-  const [chatInput, setChatInput] = useState("");
+  const meetingControls = MeetingControlsHook();
+  const [date, setDate] = useState<Date | null>(null);
   const [activeSidebar, setActiveSidebar] = useState("none");
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [isWhiteboardActive, setIsWhiteboardActive] = useState(false);
+
   useEffect(() => {
     meetingStore.fetchMeeting(params.id as string);
   }, [params.id as string]);
@@ -56,22 +43,9 @@ export default function MeetingRoom() {
       toast.success(`new message from ${data.displayName}`);
       addMessage(data);
     });
+    socket.on("updated-participants", (data: Chats) => {});
+    setDate(new Date());
   }, [params.id as string]);
-  const sendMessage = (e: React.ChangeEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!isConnected) return;
-    const chat: Chats = {
-      userId: session._id,
-      message: chatInput,
-      displayName: `${session.firstName} ${session.lastName}`,
-    };
-    socket.emit("on-event-message", {
-      ...chat,
-      meetingCode: meetingStore.meeting!.meetingCode,
-    });
-    addMessage(chat);
-    setChatInput("");
-  };
 
   if (meetingStore.meeting == null) {
     return <ZMeetLoader />;
@@ -85,7 +59,15 @@ export default function MeetingRoom() {
             <ShieldCheck size={12} /> Encrypted
           </div>
           <h1 className="text-xs font-medium text-zinc-400">
-            {process.env.NEXT_PUBLIC_APP_NAME} • 00:42:15
+            {process.env.NEXT_PUBLIC_APP_NAME} •{" "}
+            {date &&
+              `${date
+                .getHours()
+                .toString()
+                .padStart(
+                  2,
+                  "0",
+                )}:${date.getMinutes().toString().padStart(2, "0")} ${date.getMonth() + 1}/${date.getFullYear()}`}
           </h1>
         </div>
         <div className="flex items-center gap-2">
@@ -104,9 +86,10 @@ export default function MeetingRoom() {
           {/* Viewport: Non-scrollable wrapper */}
           <div className="flex-1 p-4 flex gap-4 min-h-0 overflow-hidden">
             {/* Primary Content (Screen Share or Whiteboard) */}
-            {(isScreenSharing || isWhiteboardActive) && (
+            {(meetingControls.isScreenSharing ||
+              meetingControls.isWhiteboardActive) && (
               <div className="flex-3 bg-zinc-900 rounded-xl overflow-hidden relative border border-white/5 shadow-2xl">
-                {isWhiteboardActive ? (
+                {meetingControls.isWhiteboardActive ? (
                   <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center relative">
                     <PenTool size={48} className="text-emerald-500/20 mb-4" />
                     <p className="text-slate-400 font-medium">
@@ -140,84 +123,16 @@ export default function MeetingRoom() {
             )}
             {/* Participants Grid */}
             <MeetingParticipants
-              isScreenSharing={isScreenSharing}
-              isWhiteboardActive={isWhiteboardActive}
-              camOn={camOn}
+              isScreenSharing={meetingControls.isScreenSharing}
+              isWhiteboardActive={meetingControls.isWhiteboardActive}
+              camOn={meetingControls.camOn}
             />
           </div>
 
-          {/* Bottom Controls: Floating Style */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-50">
-            <div className="bg-zinc-900/90 backdrop-blur-2xl border border-white/10 px-4 lg:flex-row! py-2.5 rounded-2xl flex-col gap-y-12  items-center gap-2 shadow-2xl">
-              <div className="flex justify-between lg:justify-start">
-                <button
-                  onClick={() => setMicOn(!micOn)}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${micOn ? "hover:bg-zinc-800 text-zinc-300" : "bg-red-500 text-white"}`}
-                >
-                  {micOn ? <Mic size={20} /> : <MicOff size={20} />}
-                </button>
-                <button
-                  onClick={() => setCamOn(!camOn)}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${camOn ? "hover:bg-zinc-800 text-zinc-300" : "bg-red-500 text-white"}`}
-                >
-                  {camOn ? <Video size={20} /> : <CameraOff size={20} />}
-                </button>
-
-                <div className="w-px h-6 bg-white/10 mx-1" />
-
-                <button
-                  onClick={() => {
-                    setIsScreenSharing(!isScreenSharing);
-                    setIsWhiteboardActive(false);
-                  }}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isScreenSharing ? "bg-emerald-500 text-white" : "hover:bg-zinc-800 text-zinc-300"}`}
-                >
-                  <Monitor size={20} />
-                </button>
-                <button
-                  onClick={() => {
-                    setIsWhiteboardActive(!isWhiteboardActive);
-                    setIsScreenSharing(false);
-                  }}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isWhiteboardActive ? "bg-emerald-500 text-white" : "hover:bg-zinc-800 text-zinc-300"}`}
-                >
-                  <PenTool size={20} />
-                </button>
-              </div>
-              <div className="h-6 lg:h-0" />
-              <div className="flex justify-between lg:justify-start">
-                <div className="w-px h-6 bg-white/10 mx-1 hidden lg:visible" />
-
-                <button
-                  onClick={() =>
-                    setActiveSidebar(
-                      activeSidebar === "participants"
-                        ? "none"
-                        : "participants",
-                    )
-                  }
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative ${activeSidebar === "participants" ? "bg-zinc-800 text-white" : "hover:bg-zinc-800 text-zinc-300"}`}
-                >
-                  <Users size={20} />
-                  {waiters.waiters.length > 0 && (
-                    <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-zinc-900" />
-                  )}
-                </button>
-                <button
-                  onClick={() =>
-                    setActiveSidebar(activeSidebar === "chat" ? "none" : "chat")
-                  }
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${activeSidebar === "chat" ? "bg-zinc-800 text-white" : "hover:bg-zinc-800 text-zinc-300"}`}
-                >
-                  <MessageSquare size={20} />
-                </button>
-
-                <button className="ml-2 bg-red-600 hover:bg-red-700 text-white px-4 h-10 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-red-900/20">
-                  <PhoneOff size={16} /> Leave
-                </button>
-              </div>
-            </div>
-          </div>
+          <BottomControls
+            setActiveSidebar={setActiveSidebar}
+            activeSidebar={activeSidebar}
+          />
         </div>
 
         {/* Sidebar Panel */}
@@ -243,11 +158,16 @@ export default function MeetingRoom() {
 
             {activeSidebar === "chat" && (
               <div className="p-4 border-t border-white/5">
-                <form onSubmit={sendMessage} className="relative">
+                <form
+                  onSubmit={meetingControls.sendMessage}
+                  className="relative"
+                >
                   <input
                     type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
+                    value={meetingControls.chatInput}
+                    onChange={(e) =>
+                      meetingControls.setChatInput(e.target.value)
+                    }
                     placeholder="Message..."
                     className="w-full bg-zinc-800 border-none rounded-xl py-2.5 pl-4 pr-10 text-xs text-white focus:ring-1 focus:ring-emerald-500 outline-none"
                   />

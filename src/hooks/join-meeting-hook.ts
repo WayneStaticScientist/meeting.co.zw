@@ -15,7 +15,12 @@ export const useJoinMeetingHook = () => {
   const { socket, isConnected } = useSocket();
   const handleJoinRequest = (data: Participant) => {
     toast.info(`${data.displayName}`, {
-      actionProps: { children: "Add", onPress: () => {} },
+      actionProps: {
+        children: "Add",
+        onPress: () => {
+          meetingStore.admitParticipant(data);
+        },
+      },
       description: `${data.displayName} wants to join meeting`,
     });
     waiters.addWaiter(data);
@@ -31,6 +36,9 @@ export const useJoinMeetingHook = () => {
     ) {
       return;
     }
+    socket.on(`${session._id}-yes-join`, () => {
+      meetingStore.fetchMeeting(meetingStore.meeting!.meetingCode);
+    });
     socket.emit("ask-to-join", {
       userId: session._id,
       meetingCode: meetingStore.meeting.meetingCode,
@@ -51,7 +59,6 @@ export const useJoinMeetingHook = () => {
     if (
       meetingStore.meeting!.participants.find((e) => e.userId === session._id)
     ) {
-      console.log("id is ", meetingStore.meeting.meetingCode);
       socket.emit("try-to-join", {
         userId: session._id,
         meetingCode: meetingStore.meeting.meetingCode,

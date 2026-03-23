@@ -3,11 +3,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 
 export const useMediaStream = () => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isPaused, setIsPaused] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const startStream = useCallback(async () => {
+  const startStream = useCallback(async ({ videoEnabled = true }) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -17,8 +17,15 @@ export const useMediaStream = () => {
         },
         audio: true,
       });
-
+      if (!videoEnabled) {
+        const videoTrack = stream.getVideoTracks()[0];
+        videoTrack.enabled = false;
+        setIsPaused(true);
+      } else {
+        setIsMuted(false);
+      }
       setLocalStream(stream);
+      setIsMuted(false);
       streamRef.current = stream;
       return stream;
     } catch (error) {

@@ -30,7 +30,7 @@ export default function MeetingParticipants({
         // Check if user is host OR if camOn is explicitly true
         if (meeting.host === sessionStore._id || camOn) {
           try {
-            await startStream();
+            await startStream({ videoEnabled: true });
             socket.emit("admin-start-streaming", {
               meetingCode: meeting.meetingCode,
               userId: sessionStore._id,
