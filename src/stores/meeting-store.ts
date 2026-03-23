@@ -14,6 +14,8 @@ export const useMeetingStore = create<{
   currentAdmissionId: string;
   fetchMeeting: (id: string) => void;
   fetchMeetings: (page: number) => void;
+  updateParticipants: (participants: Participant[]) => void;
+  closeMeeting: () => void;
   admitParticipant: (participant: Participant) => Promise<string | undefined>;
 }>()(
   immer((set, get) => ({

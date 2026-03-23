@@ -11,18 +11,19 @@ import {
   Type,
   Maximize2,
 } from "lucide-react";
+import { toast } from "@heroui/react";
 import { useParams } from "next/navigation";
-import { Chats, useMessages } from "@/stores/chats-store";
 import { useSocket } from "@/providers/socket-provider";
 import { useMeetingStore } from "@/stores/meeting-store";
+import { Chats, useMessages } from "@/stores/chats-store";
 import { useJoinMeetingHook } from "@/hooks/join-meeting-hook";
 import { ZMeetLoader } from "@/components/loaders/meeting-loader";
+import BottomControls from "@/components/meeting/bottom-controls";
+import { MeetingControlsHook } from "@/hooks/meeting-controls-hook";
 import MeetingChatsLayout from "@/components/meeting/meeting-chats-layout";
 import MeetingWaitingRoom from "@/components/meeting/meeting-waiting-room";
 import MeetingParticipants from "@/components/meeting/meeting-participants-layout";
-import { toast } from "@heroui/react";
-import BottomControls from "@/components/meeting/bottom-controls";
-import { MeetingControlsHook } from "@/hooks/meeting-controls-hook";
+import { Participant } from "@/types/participant";
 
 export default function MeetingRoom() {
   const params = useParams();
@@ -43,7 +44,12 @@ export default function MeetingRoom() {
       toast.success(`new message from ${data.displayName}`);
       addMessage(data);
     });
-    socket.on("updated-participants", (data: Chats) => {});
+    socket.on("close-meeting", (data: Participant[]) => {
+      meetingStore.closeMeeting();
+    });
+    socket.on("updated-participants", (data: Participant[]) => {
+      meetingStore.updateParticipants(data);
+    });
     setDate(new Date());
   }, [params.id as string]);
 
