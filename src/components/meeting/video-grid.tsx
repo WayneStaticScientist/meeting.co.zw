@@ -4,7 +4,7 @@ import { useRTCHandler } from "@/hooks/use-rtc-handler";
 
 export default function VideoGrid({ localStream, userId }: any) {
   // Use the mock for the preview environment, but you should use your real hook locally.
-  const { remoteStreams } = useRTCHandler(localStream, userId);
+  const { remoteStreams } = useRTCHandler(userId);
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
   const remoteParticipants = Object.entries(remoteStreams);
