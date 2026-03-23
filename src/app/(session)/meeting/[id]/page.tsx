@@ -13,17 +13,18 @@ import {
 } from "lucide-react";
 import { toast } from "@heroui/react";
 import { useParams } from "next/navigation";
+import { Chats, useMessages } from "@/stores/chats-store";
 import { useSocket } from "@/providers/socket-provider";
 import { useMeetingStore } from "@/stores/meeting-store";
-import { Chats, useMessages } from "@/stores/chats-store";
 import { useJoinMeetingHook } from "@/hooks/join-meeting-hook";
 import { ZMeetLoader } from "@/components/loaders/meeting-loader";
 import BottomControls from "@/components/meeting/bottom-controls";
-import { MeetingControlsHook } from "@/hooks/meeting-controls-hook";
 import MeetingChatsLayout from "@/components/meeting/meeting-chats-layout";
 import MeetingWaitingRoom from "@/components/meeting/meeting-waiting-room";
 import MeetingParticipants from "@/components/meeting/meeting-participants-layout";
 import { Participant } from "@/types/participant";
+import ChatInput from "@/components/meeting/chat-input";
+import { useMeetingControlsStore } from "@/stores/use-meeting-control";
 
 export default function MeetingRoom() {
   const params = useParams();
@@ -31,7 +32,7 @@ export default function MeetingRoom() {
   const { addMessage } = useMessages();
   const meetingStore = useMeetingStore();
   const { socket, isConnected } = useSocket();
-  const meetingControls = MeetingControlsHook();
+  const meetingControls = useMeetingControlsStore();
   const [date, setDate] = useState<Date | null>(null);
   const [activeSidebar, setActiveSidebar] = useState("none");
 
@@ -162,30 +163,7 @@ export default function MeetingRoom() {
               )}
             </div>
 
-            {activeSidebar === "chat" && (
-              <div className="p-4 border-t border-white/5">
-                <form
-                  onSubmit={meetingControls.sendMessage}
-                  className="relative"
-                >
-                  <input
-                    type="text"
-                    value={meetingControls.chatInput}
-                    onChange={(e) =>
-                      meetingControls.setChatInput(e.target.value)
-                    }
-                    placeholder="Message..."
-                    className="w-full bg-zinc-800 border-none rounded-xl py-2.5 pl-4 pr-10 text-xs text-white focus:ring-1 focus:ring-emerald-500 outline-none"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-2 top-1.5 p-1.5 text-emerald-500 hover:text-emerald-400"
-                  >
-                    <Send size={16} />
-                  </button>
-                </form>
-              </div>
-            )}
+            {activeSidebar === "chat" && <ChatInput />}
           </div>
         )}
       </div>

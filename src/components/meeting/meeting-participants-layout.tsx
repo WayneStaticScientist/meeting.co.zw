@@ -1,11 +1,11 @@
 "use client";
-import { useMediaStream } from "@/hooks/use-media-stream";
-import { useMeetingStore } from "@/stores/meeting-store";
-import { useSessionState } from "@/stores/session-store";
-import VideoGrid from "./video-grid";
 import { useEffect } from "react";
+import VideoGrid from "./video-grid";
 import { Toaster } from "@/utils/toast-marker";
 import { useSocket } from "@/providers/socket-provider";
+import { useMeetingStore } from "@/stores/meeting-store";
+import { useSessionState } from "@/stores/session-store";
+import { useMediaStream } from "@/stores/media-stream-store";
 
 export default function MeetingParticipants({
   isScreenSharing,
@@ -18,8 +18,7 @@ export default function MeetingParticipants({
 }) {
   const sessionStore = useSessionState();
   const { socket, isConnected } = useSocket();
-  const { localStream, startStream, toggleVideo, toggleAudio } =
-    useMediaStream();
+  const { localStream, startStream } = useMediaStream();
 
   const { meeting } = useMeetingStore();
 

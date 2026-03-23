@@ -1,11 +1,10 @@
 import { useSocket } from "@/providers/socket-provider";
+import { useMediaStream } from "@/stores/media-stream-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useEffect, useRef, useState, useCallback } from "react";
 
-export const useRTCHandler = (
-  localStream: MediaStream | null,
-  sessionUserId: string,
-) => {
+export const useRTCHandler = (sessionUserId: string) => {
+  const { localStream } = useMediaStream();
   const { socket } = useSocket();
   const meeting = useMeetingStore();
   const [remoteStreams, setRemoteStreams] = useState<{
@@ -23,45 +22,42 @@ export const useRTCHandler = (
       { urls: "stun:stun1.l.google.com:19302" },
     ],
   };
+  const replaceTracks = (stream: MediaStream) => {
+    Object.values(peers.current).forEach((pc) => {
+      const senders = pc.getSenders();
+
+      stream.getTracks().forEach((track) => {
+        const sender = senders.find(
+          (s) => s.track && s.track.kind === track.kind,
+        );
+
+        if (sender) {
+          console.log(`🔁 Replacing ${track.kind}`);
+          sender.replaceTrack(track);
+        } else {
+          console.warn(`⚠️ No sender for ${track.kind} — skipping`);
+        }
+      });
+    });
+  };
   useEffect(() => {
     if (!localStream) return;
-
-    console.log("🎥 Local stream ready, adding tracks + renegotiating");
 
     Object.entries(peers.current).forEach(async ([userId, pc]) => {
       const senders = pc.getSenders();
 
-      let added = false;
-
-      localStream.getTracks().forEach((track) => {
-        const exists = senders.find(
-          (s) => s.track && s.track.kind === track.kind,
-        );
+      localStream.getTracks().forEach((track: any) => {
+        // Check if we are already sending this kind of track (video/audio)
+        const exists = senders.find((s) => s.track?.kind === track.kind);
 
         if (!exists) {
-          console.log(`➕ Adding ${track.kind} to ${userId}`);
+          // If it's a new track, add it. This triggers 'onnegotiationneeded'
           pc.addTrack(track, localStream);
-          added = true;
+        } else {
+          // If we already had a "blank/dummy" track, replace it
+          exists.replaceTrack(track);
         }
       });
-
-      // 🔥 THIS IS THE FIX
-      if (added) {
-        try {
-          console.log(`🔄 Forcing renegotiation with ${userId}`);
-
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-
-          socket.emit("signal", {
-            to: userId,
-            offer: pc.localDescription,
-            meetingCode: meeting.meeting?.meetingCode,
-          });
-        } catch (err) {
-          console.error("Renegotiation error:", err);
-        }
-      }
     });
   }, [localStream]);
   const createPeer = useCallback(
@@ -83,9 +79,13 @@ export const useRTCHandler = (
 
       // 2. Add Local Tracks
       if (localStream) {
-        localStream
-          .getTracks()
-          .forEach((track) => pc.addTrack(track, localStream));
+        const existingKinds = pc.getSenders().map((s) => s.track?.kind);
+
+        localStream.getTracks().forEach((track: any) => {
+          if (!existingKinds.includes(track.kind)) {
+            pc.addTrack(track, localStream);
+          }
+        });
       }
 
       // 3. Handle Incoming Tracks
@@ -216,5 +216,8 @@ export const useRTCHandler = (
     };
   }, [socket, sessionUserId, meeting.meeting?.meetingCode, createPeer]);
 
-  return { remoteStreams };
+  return { remoteStreams, replaceTracks };
 };
+function useMediaStore(): { localStream: any } {
+  throw new Error("Function not implemented.");
+}

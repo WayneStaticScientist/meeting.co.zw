@@ -9,13 +9,13 @@ import {
   Users,
   Video,
 } from "lucide-react";
-import { AlertDialog, Button } from "@heroui/react";
-import { useWaitingListStore } from "@/stores/waiting-list-store";
-import { MeetingControlsHook } from "@/hooks/meeting-controls-hook";
 import ZLoader from "../displays/z-loader";
+import { AlertDialog, Button } from "@heroui/react";
 import { useSessionState } from "@/stores/session-store";
 import { useMeetingStore } from "@/stores/meeting-store";
-import { useMediaStream } from "@/hooks/use-media-stream";
+import { useMediaStream } from "@/stores/media-stream-store";
+import { useWaitingListStore } from "@/stores/waiting-list-store";
+import { useMeetingControlsStore } from "@/stores/use-meeting-control";
 
 export default function BottomControls({
   setActiveSidebar,
@@ -28,15 +28,15 @@ export default function BottomControls({
   const session = useSessionState();
   const meeting = useMeetingStore();
   const waiters = useWaitingListStore();
-  const meetingControls = MeetingControlsHook();
+  const meetingControls = useMeetingControlsStore();
   return (
     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-50">
       <div className="bg-zinc-900/90 backdrop-blur-2xl border border-white/10 px-4 lg:flex-row! py-2.5 rounded-2xl flex-col gap-y-12  items-center gap-2 shadow-2xl">
         <div className="flex justify-between lg:justify-start">
           <button
-            onClick={() => {
+            onClick={async () => {
               if (!media.localStream) {
-                media.startStream({ videoEnabled: false });
+                await media.startStream({ videoEnabled: true });
               } else {
                 media.toggleAudio();
               }
@@ -55,7 +55,7 @@ export default function BottomControls({
             }}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${!media.isPaused ? "hover:bg-zinc-800 text-zinc-300" : "bg-red-500 text-white"}`}
           >
-            {media.isPaused ? <Video size={20} /> : <CameraOff size={20} />}
+            {!media.isPaused ? <Video size={20} /> : <CameraOff size={20} />}
           </button>
           <div className="w-px h-6 bg-white/10 mx-1" />
           <button

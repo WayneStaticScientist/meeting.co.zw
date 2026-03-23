@@ -1,21 +1,18 @@
 "use client";
+
+import { useState } from "react";
+import { Send } from "lucide-react";
 import { useSocket } from "@/providers/socket-provider";
 import { Chats, useMessages } from "@/stores/chats-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useSessionState } from "@/stores/session-store";
-import { useWaitingListStore } from "@/stores/waiting-list-store";
-import { useState } from "react";
 
-export const MeetingControlsHook = () => {
+export default function chatInput() {
   const session = useSessionState();
+  const meetingStore = useMeetingStore();
   const { addMessage } = useMessages();
   const { socket, isConnected } = useSocket();
-  const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
-  const meetingStore = useMeetingStore();
   const [chatInput, setChatInput] = useState("");
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [isWhiteboardActive, setIsWhiteboardActive] = useState(false);
   const sendMessage = (e: React.ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isConnected) return;
@@ -31,17 +28,23 @@ export const MeetingControlsHook = () => {
     addMessage(chat);
     setChatInput("");
   };
-  return {
-    micOn,
-    sendMessage,
-    setCamOn,
-    setMicOn,
-    chatInput,
-    setChatInput,
-    camOn,
-    isScreenSharing,
-    setIsScreenSharing,
-    isWhiteboardActive,
-    setIsWhiteboardActive,
-  };
-};
+  return (
+    <div className="p-4 border-t border-white/5">
+      <form onSubmit={sendMessage} className="relative">
+        <input
+          type="text"
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          placeholder="Message..."
+          className="w-full bg-zinc-800 border-none rounded-xl py-2.5 pl-4 pr-10 text-xs text-white focus:ring-1 focus:ring-emerald-500 outline-none"
+        />
+        <button
+          type="submit"
+          className="absolute right-2 top-1.5 p-1.5 text-emerald-500 hover:text-emerald-400"
+        >
+          <Send size={16} />
+        </button>
+      </form>
+    </div>
+  );
+}

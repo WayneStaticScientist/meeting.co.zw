@@ -14,6 +14,11 @@ export const useJoinMeetingHook = () => {
   const [isOwner, setIsOwner] = useState(false);
   const { socket, isConnected } = useSocket();
   const handleJoinRequest = (data: Participant) => {
+    if (
+      meetingStore.meeting?.participants.find((e) => e.userId === data.userId)
+    ) {
+      return;
+    }
     toast.info(`${data.displayName}`, {
       actionProps: {
         children: "Add",
