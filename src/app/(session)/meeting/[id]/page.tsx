@@ -1,11 +1,10 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutGrid,
   X,
   ShieldCheck,
   PenTool,
-  Send,
   Pencil,
   Eraser,
   Type,
@@ -144,7 +143,7 @@ export default function MeetingRoom() {
 
         {/* Sidebar Panel */}
         {activeSidebar !== "none" && (
-          <div className="w-80 bg-zinc-900 border-l border-white/5 flex flex-col h-full animate-in slide-in-from-right duration-300">
+          <div className="w-80 bg-zinc-900 border-l border-white/5 flex flex-col h-full pb-16 animate-in slide-in-from-right duration-300">
             <div className="p-4 flex items-center justify-between border-b border-white/5">
               <h2 className="font-bold text-sm capitalize">{activeSidebar}</h2>
               <button

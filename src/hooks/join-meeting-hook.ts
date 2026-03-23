@@ -14,16 +14,27 @@ export const useJoinMeetingHook = () => {
   const [isOwner, setIsOwner] = useState(false);
   const { socket, isConnected } = useSocket();
   const handleJoinRequest = (data: Participant) => {
-    if (
-      meetingStore.meeting?.participants.find((e) => e.userId === data.userId)
-    ) {
+    const currentWaiters = useWaitingListStore.getState().waiters;
+    const currentParticipants =
+      useMeetingStore.getState().meeting?.participants || [];
+    const isAlreadyWaiting = currentWaiters.some(
+      (w) => w.userId === data.userId,
+    );
+    const isAlreadyInMeeting = currentParticipants.some(
+      (p) => p.userId === data.userId,
+    );
+
+    if (isAlreadyWaiting || isAlreadyInMeeting) {
+      console.log("🚫 User already processed, ignoring duplicate event.");
       return;
     }
     toast.info(`${data.displayName}`, {
       actionProps: {
         children: "Add",
-        onPress: () => {
-          meetingStore.admitParticipant(data);
+        onPress: async () => {
+          const user = await meetingStore.admitParticipant(data);
+          if (!user) return;
+          waiters.removeWaiter(user);
         },
       },
       description: `${data.displayName} wants to join meeting`,
@@ -48,7 +59,11 @@ export const useJoinMeetingHook = () => {
       userId: session._id,
       meetingCode: meetingStore.meeting.meetingCode,
     });
-  }, [session._id, isConnected, meetingStore]);
+    return () => {
+      socket.off(`${session._id}-yes-join`);
+      socket.off(`ask-to-join`);
+    };
+  }, [session._id, isConnected, meetingStore.meeting?.meetingCode]);
   useEffect(() => {
     if (!isOwner) return;
     socket.on(`${session._id}-user-wanna-join`, handleJoinRequest);

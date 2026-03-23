@@ -5,17 +5,19 @@ import {
   Mic,
   MicOff,
   Monitor,
-  PenTool,
+  Share,
   Users,
   Video,
 } from "lucide-react";
 import ZLoader from "../displays/z-loader";
-import { AlertDialog, Button } from "@heroui/react";
+import { AlertDialog, Button, Dropdown, Label } from "@heroui/react";
 import { useSessionState } from "@/stores/session-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useMediaStream } from "@/stores/media-stream-store";
+import ToolTipIconButton from "../actions/tooltip-icon-button";
 import { useWaitingListStore } from "@/stores/waiting-list-store";
 import { useMeetingControlsStore } from "@/stores/use-meeting-control";
+import { Toaster } from "@/utils/toast-marker";
 
 export default function BottomControls({
   setActiveSidebar,
@@ -29,84 +31,120 @@ export default function BottomControls({
   const meeting = useMeetingStore();
   const waiters = useWaitingListStore();
   const meetingControls = useMeetingControlsStore();
+  function shareLink(): void {
+    const inviteUrl = `${window.location.origin}/meeting/${meeting.meeting?.meetingCode}`;
+    navigator.clipboard.writeText(inviteUrl);
+    Toaster.success("Link copied to clipboard");
+  }
+
+  function shareCode(): void {
+    navigator.clipboard.writeText(`${meeting.meeting?.meetingCode}`);
+    Toaster.success("Invation code copied to clipboard");
+  }
+
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-50">
-      <div className="bg-zinc-900/90 backdrop-blur-2xl border border-white/10 px-4 lg:flex-row! py-2.5 rounded-2xl flex-col gap-y-12  items-center gap-2 shadow-2xl">
-        <div className="flex justify-between lg:justify-start">
-          <button
-            onClick={async () => {
+    <div
+      className={`fixed lg:absolute bottom-8 left-1/2 -translate-x-1/2 flex   justify-center items-center gap-3 z-50 ${
+        activeSidebar !== "none" ? "hidden lg:flex" : ""
+      }`}
+    >
+      <div className="bg-zinc-900/90 lg:flex-row! flex gap-3 backdrop-blur-2xl border border-white/10 px-4 py-2.5 rounded-2xl flex-col gap-y-4 items-center shadow-2xl">
+        <div className="flex justify-between gap-4 lg:justify-start">
+          <ToolTipIconButton
+            currentState={media.isMuted}
+            trueState={<MicOff size={20} />}
+            falseState={<Mic size={20} />}
+            tooltip={media.isMuted ? "Unmute" : "Mute"}
+            onPress={async () => {
               if (!media.localStream) {
                 await media.startStream({ videoEnabled: true });
               } else {
                 media.toggleAudio();
               }
             }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${!media.isMuted ? "hover:bg-zinc-800 text-zinc-300" : "bg-red-500 text-white"}`}
-          >
-            {!media.isMuted ? <Mic size={20} /> : <MicOff size={20} />}
-          </button>
-          <button
-            onClick={() => {
+          />
+          <ToolTipIconButton
+            currentState={media.isPaused}
+            trueState={<CameraOff size={20} />}
+            falseState={<Video size={20} />}
+            tooltip={media.isMuted ? "Show Camera" : "Hide Camera"}
+            onPress={async () => {
               if (!media.localStream) {
                 media.startStream({ videoEnabled: true });
               } else {
                 media.toggleVideo();
               }
             }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${!media.isPaused ? "hover:bg-zinc-800 text-zinc-300" : "bg-red-500 text-white"}`}
-          >
-            {!media.isPaused ? <Video size={20} /> : <CameraOff size={20} />}
-          </button>
-          <div className="w-px h-6 bg-white/10 mx-1" />
-          <button
-            onClick={() => {
+          />
+          <ToolTipIconButton
+            currentState={meetingControls.isScreenSharing}
+            trueState={<Monitor size={20} />}
+            falseState={<Monitor size={20} />}
+            tooltip={
+              meetingControls.isScreenSharing
+                ? "Hide Screen Share"
+                : "Show Screen Sharing"
+            }
+            onPress={async () => {
               meetingControls.setIsScreenSharing(
                 !meetingControls.isScreenSharing,
               );
               meetingControls.setIsWhiteboardActive(false);
             }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${meetingControls.isScreenSharing ? "bg-emerald-500 text-white" : "hover:bg-zinc-800 text-zinc-300"}`}
-          >
-            <Monitor size={20} />
-          </button>
-          <button
-            onClick={() => {
-              meetingControls.setIsWhiteboardActive(
-                !meetingControls.isWhiteboardActive,
-              );
-              meetingControls.setIsScreenSharing(false);
-            }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${meetingControls.isWhiteboardActive ? "bg-emerald-500 text-white" : "hover:bg-zinc-800 text-zinc-300"}`}
-          >
-            <PenTool size={20} />
-          </button>
+          />
+          <Dropdown>
+            <ToolTipIconButton
+              currentState={meetingControls.isWhiteboardActive}
+              noState={<Share size={20} />}
+              tooltip={"Share Link"}
+              onPress={async () => {}}
+            />
+            <Dropdown.Popover placement="top" className={"bg-black"}>
+              <Dropdown.Menu
+                onAction={(key) => console.log(`Selected: ${key}`)}
+              >
+                <Dropdown.Item
+                  id="link"
+                  textValue="Meet Link"
+                  onClick={() => shareLink()}
+                >
+                  <Label>Meeting Link</Label>
+                </Dropdown.Item>
+                <Dropdown.Item
+                  id="code"
+                  textValue="Meeting Code"
+                  onClick={() => shareCode()}
+                >
+                  <Label>Meeting Code</Label>
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown.Popover>
+          </Dropdown>
         </div>
-        <div className="h-6 lg:h-0" />
-        <div className="flex justify-between lg:justify-start">
-          <div className="w-px h-6 bg-white/10 mx-1 hidden lg:visible" />
-
-          <button
-            onClick={() =>
+        <div className="flex justify-between gap-4 lg:justify-start">
+          <ToolTipIconButton
+            noState={
+              <>
+                <Users size={20} />
+                {waiters.waiters.length > 0 && (
+                  <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-zinc-900" />
+                )}
+              </>
+            }
+            tooltip={"Participants"}
+            onPress={async () => {
               setActiveSidebar(
                 activeSidebar === "participants" ? "none" : "participants",
-              )
-            }
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative ${activeSidebar === "participants" ? "bg-zinc-800 text-white" : "hover:bg-zinc-800 text-zinc-300"}`}
-          >
-            <Users size={20} />
-            {waiters.waiters.length > 0 && (
-              <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-zinc-900" />
-            )}
-          </button>
-          <button
-            onClick={() =>
-              setActiveSidebar(activeSidebar === "chat" ? "none" : "chat")
-            }
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${activeSidebar === "chat" ? "bg-zinc-800 text-white" : "hover:bg-zinc-800 text-zinc-300"}`}
-          >
-            <MessageSquare size={20} />
-          </button>
-
+              );
+            }}
+          />
+          <ToolTipIconButton
+            noState={<MessageSquare size={20} />}
+            tooltip={"Open Chats"}
+            onPress={async () => {
+              setActiveSidebar(activeSidebar === "chat" ? "none" : "chat");
+            }}
+          />
           <AlertDialog>
             <Button variant="danger">
               {meeting.leaving ? <ZLoader /> : "Leave"}

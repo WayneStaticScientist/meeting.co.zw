@@ -1,23 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import {
-  Mail,
-  Lock,
-  User,
-  Phone,
-  Globe,
-  MapPin,
-  IdCard,
-  Eye,
-  EyeOff,
-  ChevronRight,
-  Github,
-  Calendar,
-  Video,
-  Mic,
-  Monitor,
-  ShieldCheck,
-} from "lucide-react";
+import { useState } from "react";
+import { Video, Mic, Monitor, ShieldCheck } from "lucide-react";
 import LoginLayout from "@/components/layouts/login-layout";
 import SignUpLayout from "@/components/layouts/sign-up-layout";
 

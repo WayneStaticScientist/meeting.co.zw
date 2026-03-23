@@ -8,6 +8,7 @@ import { Participant } from "@/types/participant";
 export const useMeetingStore = create<{
   meeting?: Meeting | null;
   leaving: boolean;
+  rejoin: boolean;
   loading: boolean;
   meetings: Meeting[];
   leaveMeeting: () => void;
@@ -20,6 +21,7 @@ export const useMeetingStore = create<{
 }>()(
   immer((set, get) => ({
     meeting: undefined,
+    rejoin: true,
     loading: false,
     leaving: false,
     currentAdmissionId: "",
@@ -30,7 +32,7 @@ export const useMeetingStore = create<{
       });
     },
     fetchMeeting: async (meetingId?: string) => {
-      if (!meetingId) return;
+      if (!meetingId || !get().rejoin) return;
       set((state) => {
         state.loading = true;
       });
@@ -63,7 +65,6 @@ export const useMeetingStore = create<{
           state.loading = false;
         });
         Toaster.success(`Participant ${participant.displayName} added`);
-
         return participant.userId;
       } catch (e) {
         Toaster.errorHttp(e);
@@ -77,9 +78,9 @@ export const useMeetingStore = create<{
       }
     },
     closeMeeting: async () => {
-      Toaster.success("meeting closed");
       set((state) => {
         state.meeting = null;
+        state.rejoin = false;
       });
     },
     leaveMeeting: async () => {
@@ -89,11 +90,14 @@ export const useMeetingStore = create<{
           state.leaving = true;
         });
         await api.delete("/meetings/" + get().meeting?.meetingCode);
+        Toaster.success("Meeting left");
         set((state) => {
           state.leaving = false;
           state.meeting = null;
+          state.rejoin = false;
         });
       } catch (e) {
+        Toaster.errorHttp(e);
         set((state) => {
           state.leaving = false;
         });
