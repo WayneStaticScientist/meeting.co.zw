@@ -53,9 +53,6 @@ export const useJoinMeetingHook = () => {
   }, [isOwner, socket]);
   useEffect(() => {
     if (!isConnected || !session._id || !meetingStore.meeting) return;
-    if (session._id == meetingStore.meeting.host) {
-      return;
-    }
     if (
       meetingStore.meeting!.participants.find((e) => e.userId === session._id)
     ) {
@@ -64,7 +61,7 @@ export const useJoinMeetingHook = () => {
         meetingCode: meetingStore.meeting.meetingCode,
       });
     }
-  }, [session._id, isConnected, meetingStore]);
+  }, [session._id, isConnected, meetingStore.meeting]);
 
   return { isOwner };
 };

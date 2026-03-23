@@ -1,3 +1,4 @@
+"use client";
 import { create } from "zustand";
 import api from "../../interceptior";
 import { Toaster } from "@/utils/toast-marker";
@@ -90,26 +91,33 @@ export const useSessionState = create<User & UserActions>()(
 
 export class UserStore {
   static refreshToken() {
+    if (typeof window === "undefined" || !window.localStorage) return;
     return localStorage.getItem("tk2");
   }
   static accessToken() {
+    if (typeof window === "undefined" || !window.localStorage) return;
     return localStorage.getItem("tk1");
   }
   static setTokens(accessToken: string, refreshToken: string) {
+    if (typeof window === "undefined" || !window.localStorage) return;
     localStorage.setItem("tk1", accessToken);
     localStorage.setItem("tk2", refreshToken);
   }
   static removeTokens() {
+    if (typeof window === "undefined" || !window.localStorage) return;
     localStorage.removeItem("tk1");
     localStorage.removeItem("tk2");
   }
   static setUser(user: User) {
+    if (typeof window === "undefined" || !window.localStorage) return;
     localStorage.setItem("oib", JSON.stringify(user));
   }
   static getUser() {
+    if (typeof window === "undefined" || !window.localStorage) return;
     return localStorage.getItem("oib");
   }
   static removeUser() {
+    if (typeof window === "undefined" || !window.localStorage) return;
     localStorage.removeItem("oib");
   }
 }

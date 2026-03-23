@@ -1,7 +1,4 @@
 "use client";
-import { AlertDialog, Button } from "@heroui/react";
-import { useWaitingListStore } from "@/stores/waiting-list-store";
-import { MeetingControlsHook } from "@/hooks/meeting-controls-hook";
 import {
   CameraOff,
   MessageSquare,
@@ -12,9 +9,12 @@ import {
   Users,
   Video,
 } from "lucide-react";
+import { AlertDialog, Button } from "@heroui/react";
+import { useWaitingListStore } from "@/stores/waiting-list-store";
+import { MeetingControlsHook } from "@/hooks/meeting-controls-hook";
+import ZLoader from "../displays/z-loader";
 import { useSessionState } from "@/stores/session-store";
 import { useMeetingStore } from "@/stores/meeting-store";
-import ZLoader from "../displays/z-loader";
 import { useMediaStream } from "@/hooks/use-media-stream";
 
 export default function BottomControls({
@@ -24,15 +24,7 @@ export default function BottomControls({
   setActiveSidebar: (act: string) => void;
   activeSidebar: string;
 }) {
-  const {
-    localStream,
-    startStream,
-    toggleVideo,
-    toggleAudio,
-    stopStream,
-    isPaused,
-    isMuted,
-  } = useMediaStream();
+  const media = useMediaStream();
   const session = useSessionState();
   const meeting = useMeetingStore();
   const waiters = useWaitingListStore();
@@ -43,27 +35,27 @@ export default function BottomControls({
         <div className="flex justify-between lg:justify-start">
           <button
             onClick={() => {
-              if (!localStream) {
-                startStream({ videoEnabled: false });
+              if (!media.localStream) {
+                media.startStream({ videoEnabled: false });
               } else {
-                toggleAudio();
+                media.toggleAudio();
               }
             }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${!isMuted ? "hover:bg-zinc-800 text-zinc-300" : "bg-red-500 text-white"}`}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${!media.isMuted ? "hover:bg-zinc-800 text-zinc-300" : "bg-red-500 text-white"}`}
           >
-            {!isMuted ? <Mic size={20} /> : <MicOff size={20} />}
+            {!media.isMuted ? <Mic size={20} /> : <MicOff size={20} />}
           </button>
           <button
             onClick={() => {
-              if (!localStream) {
-                startStream({ videoEnabled: true });
+              if (!media.localStream) {
+                media.startStream({ videoEnabled: true });
               } else {
-                toggleVideo();
+                media.toggleVideo();
               }
             }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${!isPaused ? "hover:bg-zinc-800 text-zinc-300" : "bg-red-500 text-white"}`}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${!media.isPaused ? "hover:bg-zinc-800 text-zinc-300" : "bg-red-500 text-white"}`}
           >
-            {!isPaused ? <Video size={20} /> : <CameraOff size={20} />}
+            {media.isPaused ? <Video size={20} /> : <CameraOff size={20} />}
           </button>
           <div className="w-px h-6 bg-white/10 mx-1" />
           <button

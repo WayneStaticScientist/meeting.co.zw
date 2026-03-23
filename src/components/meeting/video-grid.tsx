@@ -1,7 +1,6 @@
 "use client";
-import { useRTCHandler } from "@/hooks/use-rtc-handler";
-import { Toaster } from "@/utils/toast-marker";
 import { useEffect, useMemo, useRef } from "react";
+import { useRTCHandler } from "@/hooks/use-rtc-handler";
 
 export default function VideoGrid({ localStream, userId }: any) {
   // Use the mock for the preview environment, but you should use your real hook locally.
@@ -64,7 +63,6 @@ export default function VideoGrid({ localStream, userId }: any) {
             />
           </VideoContainer>
         )}
-
         {/* REMOTE VIDEOS */}
         {remoteParticipants.map(([peerId, stream]) => (
           <VideoContainer key={peerId} label="Participant">

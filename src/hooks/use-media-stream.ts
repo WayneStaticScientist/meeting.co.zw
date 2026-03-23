@@ -1,4 +1,5 @@
 "use client";
+import { Toaster } from "@/utils/toast-marker";
 import { useState, useEffect, useCallback, useRef } from "react";
 
 export const useMediaStream = () => {
@@ -22,8 +23,9 @@ export const useMediaStream = () => {
         videoTrack.enabled = false;
         setIsPaused(true);
       } else {
-        setIsMuted(false);
+        setIsPaused(false);
       }
+
       setLocalStream(stream);
       setIsMuted(false);
       streamRef.current = stream;
