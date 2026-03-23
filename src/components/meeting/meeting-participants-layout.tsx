@@ -5,6 +5,7 @@ import { useSessionState } from "@/stores/session-store";
 import VideoGrid from "./video-grid";
 import { useEffect } from "react";
 import { Toaster } from "@/utils/toast-marker";
+import { useSocket } from "@/providers/socket-provider";
 
 export default function MeetingParticipants({
   isScreenSharing,
@@ -16,21 +17,12 @@ export default function MeetingParticipants({
   camOn: boolean;
 }) {
   const sessionStore = useSessionState();
-
+  const { socket, isConnected } = useSocket();
   const { localStream, startStream, toggleVideo, toggleAudio } =
     useMediaStream();
 
   const { meeting } = useMeetingStore();
-  const getGridClass = () => {
-    const count = meeting!.participants?.length ?? 0;
-    if (isScreenSharing || isWhiteboardActive)
-      return "grid-cols-1 md:grid-cols-4 lg:grid-cols-6"; // Sidebar style grid
-    if (count === 1) return "grid-cols-1";
-    if (count <= 2) return "grid-cols-1 md:grid-cols-2";
-    if (count <= 4) return "grid-cols-2";
-    if (count <= 6) return "grid-cols-2 md:grid-cols-3";
-    return "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
-  };
+
   useEffect(() => {
     if (meeting === null || sessionStore._id === null) return;
     if (meeting?.host == sessionStore._id) {
@@ -39,7 +31,10 @@ export default function MeetingParticipants({
         if (meeting.host === sessionStore._id || camOn) {
           try {
             await startStream();
-            Toaster.success("Camera initialized");
+            socket.emit("admin-start-streaming", {
+              meetingCode: meeting.meetingCode,
+              userId: sessionStore._id,
+            });
           } catch (err) {
             Toaster.error("Could not start camera");
           }
@@ -48,13 +43,13 @@ export default function MeetingParticipants({
 
       handleStreamInit();
     }
-  }, [meeting, sessionStore._id, camOn]);
+  }, [meeting, sessionStore._id, camOn, isConnected]);
   if (!meeting) {
     return <></>;
   }
   return (
     <div
-      className={`flex-1 min-h-0 grid ${getGridClass()} gap-3 transition-all duration-500 ease-in-out h-full`}
+      className={`flex-1 min-h-0 grid gap-3 transition-all duration-500 ease-in-out h-full`}
     >
       <VideoGrid
         localStream={localStream}

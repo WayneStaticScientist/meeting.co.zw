@@ -1,71 +1,111 @@
-import { useEffect, useRef, useState } from "react";
 import { useSocket } from "@/providers/socket-provider";
+import { useMeetingStore } from "@/stores/meeting-store";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 export const useRTCHandler = (
   localStream: MediaStream | null,
   sessionUserId: string,
 ) => {
   const { socket } = useSocket();
+  const meeting = useMeetingStore();
   const [remoteStreams, setRemoteStreams] = useState<{
     [userId: string]: MediaStream;
   }>({});
+
+  // Refs to keep track of state without triggering re-renders
   const peers = useRef<{ [userId: string]: RTCPeerConnection }>({});
+  const isMakingOffer = useRef<{ [userId: string]: boolean }>({});
 
   const iceConfig = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   };
 
-  // Helper to create a connection
-  const createPeer = (targetUserId: string, initiator: boolean) => {
-    const pc = new RTCPeerConnection(iceConfig);
-    peers.current[targetUserId] = pc;
+  const createPeer = useCallback(
+    (targetUserId: string, initiator: boolean) => {
+      // 1. Prevent duplicate PeerConnections
+      if (peers.current[targetUserId]) return peers.current[targetUserId];
 
-    // Add local tracks so the other person can see YOU
-    localStream
-      ?.getTracks()
-      .forEach((track) => pc.addTrack(track, localStream));
+      const pc = new RTCPeerConnection(iceConfig);
+      peers.current[targetUserId] = pc;
 
-    // Receive remote tracks so YOU can see them
-    pc.ontrack = (event) => {
-      setRemoteStreams((prev) => ({
-        ...prev,
-        [targetUserId]: event.streams[0],
-      }));
-    };
+      console.log(
+        `🏗️ Creating PeerConnection for: ${targetUserId} (Initiator: ${initiator})`,
+      );
 
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("signal", { to: targetUserId, candidate: event.candidate });
+      // 2. Add Local Tracks
+      if (localStream) {
+        localStream
+          .getTracks()
+          .forEach((track) => pc.addTrack(track, localStream));
       }
-    };
 
-    // If we are the initiator, we create the offer
-    if (initiator) {
-      pc.onnegotiationneeded = async () => {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit("signal", { to: targetUserId, offer });
+      // 3. Handle Incoming Tracks
+      pc.ontrack = (event) => {
+        console.log(`🔥 TRACK RECEIVED from ${targetUserId}`);
+        const remoteStream = event.streams[0];
+        setRemoteStreams((prev) => {
+          if (prev[targetUserId]?.id === remoteStream.id) return prev;
+          return { ...prev, [targetUserId]: remoteStream };
+        });
       };
-    }
 
-    return pc;
-  };
+      // 4. ICE Candidates
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit("signal", {
+            to: targetUserId,
+            candidate: event.candidate,
+            meetingCode: meeting.meeting?.meetingCode,
+          });
+        }
+      };
+
+      // 5. Negotiation (Only for Initiator)
+      if (initiator) {
+        pc.onnegotiationneeded = async () => {
+          try {
+            if (isMakingOffer.current[targetUserId]) return;
+            isMakingOffer.current[targetUserId] = true;
+
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            socket.emit("signal", {
+              to: targetUserId,
+              offer: pc.localDescription,
+              meetingCode: meeting.meeting?.meetingCode,
+            });
+          } catch (err) {
+            console.error("Negotiation Error:", err);
+          } finally {
+            isMakingOffer.current[targetUserId] = false;
+          }
+        };
+      }
+
+      return pc;
+    },
+    [localStream, socket, meeting.meeting?.meetingCode],
+  );
 
   useEffect(() => {
-    if (!socket || !localStream) return;
+    if (!socket || !meeting.meeting?.meetingCode) return;
 
-    // 1. Listen for new users
+    // A. Listen for users joining (Only trigger if WE are the ones already there)
     socket.on("user-joined", ({ userId }) => {
       if (userId === sessionUserId) return;
-      console.log("User joined, initiating call to:", userId);
-      createPeer(userId, true); // We initiate the call
+      console.log("👋 New user joined, starting call:", userId);
+      createPeer(userId, true);
     });
 
-    // 2. Handle incoming signals (Offer, Answer, Candidates)
+    // B. Handle all incoming signals (Offer, Answer, ICE)
     socket.on("signal", async ({ from, offer, answer, candidate }) => {
-      let pc = peers.current[from];
+      console.log(
+        `📡 Signal from ${from}:`,
+        offer ? "Offer" : answer ? "Answer" : "Candidate",
+      );
 
-      // If no PC exists for this user yet, create one (Non-initiator)
+      let pc = peers.current[from];
       if (!pc) pc = createPeer(from, false);
 
       try {
@@ -73,26 +113,31 @@ export const useRTCHandler = (
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
           const ans = await pc.createAnswer();
           await pc.setLocalDescription(ans);
-          socket.emit("signal", { to: from, answer: ans });
+          socket.emit("signal", {
+            to: from,
+            answer: ans,
+            meetingCode: meeting.meeting?.meetingCode,
+          });
         } else if (answer) {
           await pc.setRemoteDescription(new RTCSessionDescription(answer));
         } else if (candidate) {
           await pc.addIceCandidate(new RTCIceCandidate(candidate));
         }
-      } catch (e) {
-        console.log(e);
+      } catch (err) {
+        console.error("Signal Handling Error:", err);
       }
     });
 
-    // 3. Cleanup on leave
+    // C. Clean up departed users
     socket.on("user-left", ({ userId }) => {
+      console.log("🏃 User left:", userId);
       if (peers.current[userId]) {
         peers.current[userId].close();
         delete peers.current[userId];
         setRemoteStreams((prev) => {
-          const newStreams = { ...prev };
-          delete newStreams[userId];
-          return newStreams;
+          const updated = { ...prev };
+          delete updated[userId];
+          return updated;
         });
       }
     });
@@ -102,7 +147,7 @@ export const useRTCHandler = (
       socket.off("signal");
       socket.off("user-left");
     };
-  }, [socket, localStream]);
+  }, [socket, sessionUserId, meeting.meeting?.meetingCode, createPeer]);
 
   return { remoteStreams };
 };

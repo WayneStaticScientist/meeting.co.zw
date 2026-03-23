@@ -26,6 +26,11 @@ export const useJoinMeetingHook = () => {
       setIsOwner(true);
       return;
     }
+    if (
+      meetingStore.meeting!.participants.find((e) => e.userId === session._id)
+    ) {
+      return;
+    }
     socket.emit("ask-to-join", {
       userId: session._id,
       meetingCode: meetingStore.meeting.meetingCode,
@@ -38,5 +43,21 @@ export const useJoinMeetingHook = () => {
       socket.off(`${session._id}-user-wanna-join`, handleJoinRequest);
     };
   }, [isOwner, socket]);
+  useEffect(() => {
+    if (!isConnected || !session._id || !meetingStore.meeting) return;
+    if (session._id == meetingStore.meeting.host) {
+      return;
+    }
+    if (
+      meetingStore.meeting!.participants.find((e) => e.userId === session._id)
+    ) {
+      console.log("id is ", meetingStore.meeting.meetingCode);
+      socket.emit("try-to-join", {
+        userId: session._id,
+        meetingCode: meetingStore.meeting.meetingCode,
+      });
+    }
+  }, [session._id, isConnected, meetingStore]);
+
   return { isOwner };
 };
