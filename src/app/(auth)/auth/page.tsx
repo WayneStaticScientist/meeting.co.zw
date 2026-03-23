@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Video, Mic, Monitor, ShieldCheck } from "lucide-react";
 import LoginLayout from "@/components/layouts/login-layout";
 import SignUpLayout from "@/components/layouts/sign-up-layout";
+import Image from "next/image";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("login");
@@ -37,10 +38,13 @@ export default function App() {
           <div className="z-10">
             <div className="flex items-center gap-3 mb-12">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-900/20">
-                <Video
-                  className="text-emerald-600"
-                  size={24}
-                  fill="currentColor"
+                <Image
+                  src={"/zanu.jpg"}
+                  className="text-emerald-600 w-44 h-44 rounded-full object-cover lg:w-72 lg:h-72"
+                  width={120}
+                  height={120}
+                  alt="ZanuPFMeeting"
+                  priority
                 />
               </div>
               <span className="text-2xl font-black tracking-tighter uppercase">
@@ -158,17 +162,6 @@ export default function App() {
             </div> */}
           </div>
         </div>
-      </div>
-
-      {/* Footer Branding */}
-      <div className="fixed bottom-6 text-zinc-400 text-[10px] font-black tracking-widest uppercase flex gap-8">
-        <span className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />{" "}
-          All Systems Online
-        </span>
-        <a href="#" className="hover:text-emerald-600 transition-colors">
-          ZanuPFMeeting Support
-        </a>
       </div>
     </div>
   );
