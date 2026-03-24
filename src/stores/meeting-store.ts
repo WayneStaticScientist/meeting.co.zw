@@ -10,22 +10,36 @@ export const useMeetingStore = create<{
   leaving: boolean;
   rejoin: boolean;
   loading: boolean;
+  currentPage: number;
+  rowsPerPage: number;
+  totalPages: number;
   meetings: Meeting[];
+  totalMeetings: number;
   leaveMeeting: () => void;
+  closeMeeting: () => void;
   currentAdmissionId: string;
   fetchMeeting: (id: string) => void;
-  fetchMeetings: (page: number) => void;
+  fetchMeetings: (page: number, limit?: number) => void;
+  setRowsPerPage: (newRows: number) => void;
   updateParticipants: (participants: Participant[]) => void;
-  closeMeeting: () => void;
   admitParticipant: (participant: Participant) => Promise<string | undefined>;
 }>()(
   immer((set, get) => ({
     meeting: undefined,
     rejoin: true,
+    totalPages: 0,
     loading: false,
+    rowsPerPage: 10,
+    currentPage: 1,
     leaving: false,
+    totalMeetings: 0,
     currentAdmissionId: "",
     meetings: [],
+    setRowsPerPage: (newRows: number) => {
+      set((state) => {
+        state.rowsPerPage = newRows;
+      });
+    },
     updateParticipants: (participants: Participant[]) => {
       set((state) => {
         state.meeting!.participants = participants;
@@ -103,15 +117,24 @@ export const useMeetingStore = create<{
         });
       }
     },
-    fetchMeetings: async (page = 1) => {
+    fetchMeetings: async (page = 1, limit?: number) => {
       try {
         set((state) => {
           state.loading = true;
         });
-        const response = await api.get("/meetings/all?page=" + page);
+        const response = await api.get(
+          "/meetings/all?page=" +
+            page +
+            "&limit=" +
+            (limit ?? get().rowsPerPage),
+        );
         set((state) => {
           state.meetings = response.data.meetings;
           state.loading = false;
+          state.totalPages = response.data.meta.lastPage;
+          state.currentPage = response.data.meta.page;
+          state.rowsPerPage = response.data.meta.limit;
+          state.totalMeetings = response.data.meta.total;
         });
       } catch (e) {
         set((state) => {

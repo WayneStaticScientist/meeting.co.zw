@@ -10,12 +10,12 @@ import {
   Video,
 } from "lucide-react";
 import ZLoader from "../displays/z-loader";
-import { AlertDialog, Button, Dropdown, Label } from "@heroui/react";
 import { useSessionState } from "@/stores/session-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useMediaStream } from "@/stores/media-stream-store";
 import ToolTipIconButton from "../actions/tooltip-icon-button";
 import { useWaitingListStore } from "@/stores/waiting-list-store";
+import { AlertDialog, Button, Dropdown, Label } from "@heroui/react";
 import { useMeetingControlsStore } from "@/stores/use-meeting-control";
 import { Toaster } from "@/utils/toast-marker";
 
@@ -55,26 +55,14 @@ export default function BottomControls({
             trueState={<MicOff size={20} />}
             falseState={<Mic size={20} />}
             tooltip={media.isMuted ? "Unmute" : "Mute"}
-            onPress={async () => {
-              if (!media.localStream) {
-                await media.startStream({ videoEnabled: true });
-              } else {
-                media.toggleAudio();
-              }
-            }}
+            onPress={media.toggleAudio}
           />
           <ToolTipIconButton
             currentState={media.isPaused}
             trueState={<CameraOff size={20} />}
             falseState={<Video size={20} />}
-            tooltip={media.isMuted ? "Show Camera" : "Hide Camera"}
-            onPress={async () => {
-              if (!media.localStream) {
-                media.startStream({ videoEnabled: true });
-              } else {
-                media.toggleVideo();
-              }
-            }}
+            tooltip={media.isPaused ? "Show Camera" : "Hide Camera"}
+            onPress={media.toggleVideo}
           />
           <ToolTipIconButton
             currentState={meetingControls.isScreenSharing}

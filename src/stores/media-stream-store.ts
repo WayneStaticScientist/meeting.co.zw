@@ -48,8 +48,8 @@ export const useMediaStream = create<MediaState>((set, get) => ({
 
   toggleVideo: () => {
     const { localStream } = get();
-    if (!localStream) return;
-
+    if (!localStream) return get().startStream({ videoEnabled: true });
+    if (get().isMuted && !get().isPaused) return get().stopStream();
     const track = localStream.getVideoTracks()[0];
     if (track) {
       track.enabled = !track.enabled;
@@ -59,8 +59,8 @@ export const useMediaStream = create<MediaState>((set, get) => ({
 
   toggleAudio: () => {
     const { localStream } = get();
-    if (!localStream) return;
-
+    if (!localStream) return get().startStream({ videoEnabled: false });
+    if (!get().isMuted && get().isPaused) return get().stopStream();
     const track = localStream.getAudioTracks()[0];
     if (track) {
       track.enabled = !track.enabled;

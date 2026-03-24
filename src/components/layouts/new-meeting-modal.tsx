@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { ModalWrapper } from "./modal";
-import { Camera, CameraOff, Mic, X } from "lucide-react";
+import { Camera, CameraOff, Mic, X, Lock, Globe } from "lucide-react";
 import { useCreateRoom } from "@/hooks/create-room-hook";
 import ZLoader from "../displays/z-loader";
 import { Button } from "@heroui/react";
@@ -31,6 +31,7 @@ export default function NewMeetingModal({
           <div className="relative aspect-video rounded-3xl bg-zinc-900 overflow-hidden shadow-2xl">
             {isCameraOn ? (
               <img
+                src={"/zanu.jpg"}
                 className="w-full h-full object-cover opacity-80"
                 alt="Preview"
               />
@@ -65,10 +66,73 @@ export default function NewMeetingModal({
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
             />
+            <div className="space-y-4 mt-4 ">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => room.setIsPublic(false)}
+                  className={`flex items-center gap-3 p-4 rounded-3xl border-2 transition-all ${!room.isPublic ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10" : "border-zinc-100 dark:border-zinc-800 bg-transparent opacity-60"}`}
+                >
+                  <div
+                    className={`p-2 rounded-xl ${!room.isPublic ? "bg-emerald-500 text-white" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500"}`}
+                  >
+                    <Lock size={18} />
+                  </div>
+                  <div className="text-left">
+                    <p
+                      className={`text-sm font-black ${!room.isPublic ? "text-emerald-900 dark:text-emerald-100" : "text-zinc-500"}`}
+                    >
+                      Private
+                    </p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => room.setIsPublic(true)}
+                  className={`flex items-center gap-3 p-4 rounded-3xl border-2 transition-all ${room.isPublic ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10" : "border-zinc-100 dark:border-zinc-800 bg-transparent opacity-60"}`}
+                >
+                  <div
+                    className={`p-2 rounded-xl ${room.isPublic ? "bg-emerald-500 text-white" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500"}`}
+                  >
+                    <Globe size={18} />
+                  </div>
+                  <div className="text-left">
+                    <p
+                      className={`text-sm font-black ${room.isPublic ? "text-emerald-900 dark:text-emerald-100" : "text-zinc-500"}`}
+                    >
+                      Public
+                    </p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Purpose Explanation */}
+              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-dashed border-zinc-200 dark:border-zinc-700">
+                {room.isPublic ? (
+                  <div className="flex gap-3">
+                    <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                      <span className="font-black text-zinc-700 dark:text-zinc-200 mr-1 italic">
+                        Public Meeting:
+                      </span>
+                      Meeting will be available to anyone(registered) on
+                      dashboard , searchable and listable
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex gap-3">
+                    <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                      <span className="font-black text-zinc-700 dark:text-zinc-200 mr-1 italic">
+                        Private Meeting:
+                      </span>
+                      You have to share the meeting link otherwise its not
+                      visible on dashboard
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           <Button
             onClick={() => {
-              room.createRoom(roomName.trim());
+              room.createRoom(roomName.trim(), room.isPublic);
             }}
             className="w-full bg-emerald-600 text-white font-black py-5 rounded-[1.5rem] mt-10 hover:bg-emerald-700 transition-all"
           >

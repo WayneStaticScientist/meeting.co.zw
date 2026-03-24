@@ -5,12 +5,14 @@ import { Toaster } from "@/utils/toast-marker";
 
 export const useCreateRoom = () => {
   const [loading, setLoading] = useState(false);
-  const createRoom = async (room: string) => {
+  const [isPublic, setIsPublic] = useState(false);
+  const createRoom = async (room: string, isPublic: boolean) => {
     try {
       if (room.trim() === "") return Toaster.error("invalid room key");
       setLoading(true);
       const response = await api.post("/meetings/create/room", {
         room: room.trim(),
+        isPublic,
       });
 
       const data = response.data.meeting.meetingCode;
@@ -24,5 +26,5 @@ export const useCreateRoom = () => {
       Toaster.errorHttp(e);
     }
   };
-  return { loading, createRoom };
+  return { loading, createRoom, isPublic, setIsPublic };
 };

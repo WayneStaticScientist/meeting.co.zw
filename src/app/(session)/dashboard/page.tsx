@@ -23,6 +23,7 @@ import { Lerper } from "@/utils/lerper";
 import ZLoader from "@/components/displays/z-loader";
 import { Meeting } from "@/types/meeting";
 import { useSessionState } from "@/stores/session-store";
+import MeetingList from "@/components/layouts/meetings-list";
 
 export default function App() {
   const meetingStore = useMeetingStore();
@@ -212,67 +213,7 @@ export default function App() {
                     View All
                   </button>
                 </div>
-
-                <div className="space-y-4">
-                  {Lerper.lerp(
-                    meetingStore.loading,
-                    <ZLoader />,
-                    Lerper.lerp(
-                      meetingStore.meetings.length == 0,
-                      <>No Meetings at the Moment</>,
-                      <>
-                        {meetingStore.meetings.map((meeting: Meeting, id) => (
-                          <div
-                            key={id}
-                            className="group relative bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-xl hover:shadow-emerald-600/5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                          >
-                            <div className="flex items-start gap-4">
-                              <div
-                                className={`w-14 h-14 rounded-2xl flex items-center justify-center ${meeting.status === "Active" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"}`}
-                              >
-                                <Calendar size={24} />
-                              </div>
-                              <div>
-                                <h4 className="font-bold text-lg group-hover:text-emerald-600 transition-colors">
-                                  {meeting.roomName}
-                                </h4>
-                                <div className="flex items-center gap-3 text-sm text-zinc-500 font-medium mt-1">
-                                  <span className="flex items-center gap-1">
-                                    <Clock size={14} /> {meeting.createdAt}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Users size={14} />{" "}
-                                    {meeting.participants.length} joined
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-zinc-50 dark:border-zinc-800">
-                              {meeting.status === "Active" && (
-                                <div className="px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full animate-pulse">
-                                  Live Now
-                                </div>
-                              )}
-                              <button
-                                onClick={() => {
-                                  if (meeting.status === "Active" && window) {
-                                    window.location.href = `/meeting/${meeting.meetingCode}`;
-                                  }
-                                }}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${meeting.status === "Active" ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"}`}
-                              >
-                                {meeting.status === "Active"
-                                  ? "Join Call"
-                                  : "Details"}
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </>,
-                    ),
-                  )}
-                </div>
+                <MeetingList />
               </div>
 
               <div className="space-y-8">
@@ -283,7 +224,7 @@ export default function App() {
                     </h3>
                     <div className="flex items-end gap-2 mb-2">
                       <span className="text-4xl font-black">
-                        {meetingStore.meetings.length}
+                        {meetingStore.totalMeetings}
                       </span>
                       <span className="text-emerald-200 text-lg font-bold pb-1">
                         Meetings
