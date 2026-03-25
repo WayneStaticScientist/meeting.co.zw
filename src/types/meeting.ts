@@ -6,6 +6,7 @@ export interface Meeting {
   meetingCode: string;
   host: any;
   createdAt: string;
+  meetingId?: string;
   participants: Participant[];
   status: "Active" | "Waiting" | "Ended";
 }

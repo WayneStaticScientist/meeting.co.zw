@@ -51,10 +51,10 @@ export default function MeetingParticipants({
       className={`flex-1 min-h-0 grid gap-3 transition-all duration-500 ease-in-out h-full`}
     >
       <VideoGrid
-        localStream={localStream}
-        userId={sessionStore._id}
-        isScreenSharing={isScreenSharing}
-        isWhiteboardActive={isWhiteboardActive}
+      // localStream={localStream}
+      // userId={sessionStore._id}
+      // isScreenSharing={isScreenSharing}
+      // isWhiteboardActive={isWhiteboardActive}
       />
       {/* {meeting?.participants?.map((p, id) => (
         <div

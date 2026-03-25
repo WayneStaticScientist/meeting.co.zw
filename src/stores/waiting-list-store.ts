@@ -7,8 +7,9 @@ export const useWaitingListStore = create<{
   addWaiter: (waiter: Participant) => void;
   removeWaiter: (userId: string) => void;
   clearWaiters: () => void;
+  pass: (userId: string) => boolean;
 }>()(
-  immer((set) => ({
+  immer((set, get) => ({
     waiters: [],
     addWaiter: (waiter: Participant) => {
       const waiterExists = useWaitingListStore
@@ -18,6 +19,12 @@ export const useWaitingListStore = create<{
       set((state) => {
         state.waiters.push(waiter);
       });
+    },
+    pass: (userId: string): boolean => {
+      if (get().waiters.find((w) => w.userId === userId)) {
+        return true;
+      }
+      return false;
     },
     removeWaiter: (userId: string) => {
       set((state) => {

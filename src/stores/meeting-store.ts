@@ -7,6 +7,7 @@ import { Participant } from "@/types/participant";
 
 export const useMeetingStore = create<{
   meeting?: Meeting | null;
+
   leaving: boolean;
   rejoin: boolean;
   loading: boolean;
@@ -15,9 +16,10 @@ export const useMeetingStore = create<{
   totalPages: number;
   meetings: Meeting[];
   totalMeetings: number;
-  leaveMeeting: () => void;
   closeMeeting: () => void;
   currentAdmissionId: string;
+  leaveMeeting: () => Promise<boolean>;
+  pass: (userId: string) => boolean;
   fetchMeeting: (id: string) => void;
   fetchMeetings: (page: number, limit?: number) => void;
   setRowsPerPage: (newRows: number) => void;
@@ -39,6 +41,12 @@ export const useMeetingStore = create<{
       set((state) => {
         state.rowsPerPage = newRows;
       });
+    },
+    pass: (userId: string): boolean => {
+      if (get().meeting!.participants.find((w) => w.userId === userId)) {
+        return true;
+      }
+      return false;
     },
     updateParticipants: (participants: Participant[]) => {
       set((state) => {
@@ -97,8 +105,8 @@ export const useMeetingStore = create<{
         state.rejoin = false;
       });
     },
-    leaveMeeting: async () => {
-      if (!get().meeting) return;
+    leaveMeeting: async (): Promise<boolean> => {
+      if (!get().meeting) return false;
       try {
         set((state) => {
           state.leaving = true;
@@ -110,12 +118,14 @@ export const useMeetingStore = create<{
           state.meeting = null;
           state.rejoin = false;
         });
+        return true;
       } catch (e) {
         Toaster.errorHttp(e);
         set((state) => {
           state.leaving = false;
         });
       }
+      return false;
     },
     fetchMeetings: async (page = 1, limit?: number) => {
       try {

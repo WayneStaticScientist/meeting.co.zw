@@ -10,6 +10,7 @@ import {
   Video,
 } from "lucide-react";
 import ZLoader from "../displays/z-loader";
+import RTKClient from "@cloudflare/realtimekit";
 import { useSessionState } from "@/stores/session-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useMediaStream } from "@/stores/media-stream-store";
@@ -18,19 +19,43 @@ import { useWaitingListStore } from "@/stores/waiting-list-store";
 import { AlertDialog, Button, Dropdown, Label } from "@heroui/react";
 import { useMeetingControlsStore } from "@/stores/use-meeting-control";
 import { Toaster } from "@/utils/toast-marker";
+import { useEffect, useState } from "react";
 
 export default function BottomControls({
   setActiveSidebar,
   activeSidebar,
+  meetingStreaming,
 }: {
   setActiveSidebar: (act: string) => void;
   activeSidebar: string;
+  meetingStreaming: RTKClient;
 }) {
   const media = useMediaStream();
   const session = useSessionState();
   const meeting = useMeetingStore();
   const waiters = useWaitingListStore();
   const meetingControls = useMeetingControlsStore();
+  const [isAudioActive, setIsAudioActive] = useState(
+    meetingStreaming.self.audioEnabled,
+  );
+  const [isVideoActive, setIsVideoActive] = useState(
+    meetingStreaming.self.videoEnabled,
+  );
+
+  useEffect(() => {
+    const handleTrackUpdate = () => {
+      setIsAudioActive(meetingStreaming.self.audioEnabled);
+      setIsVideoActive(meetingStreaming.self.videoEnabled);
+    };
+
+    // Listen for changes (Verify event names in RTK docs, usually 'trackPublished' or 'trackUpdated')
+    meetingStreaming.self.on("audioUpdate", handleTrackUpdate);
+    meetingStreaming.self.on("videoUpdate", handleTrackUpdate);
+    return () => {
+      meetingStreaming.self.off("audioUpdate", handleTrackUpdate);
+      meetingStreaming.self.off("videoUpdate", handleTrackUpdate);
+    };
+  }, [meetingStreaming]);
   function shareLink(): void {
     const inviteUrl = `${window.location.origin}/meeting/${meeting.meeting?.meetingCode}`;
     navigator.clipboard.writeText(inviteUrl);
@@ -54,15 +79,27 @@ export default function BottomControls({
             currentState={media.isMuted}
             trueState={<MicOff size={20} />}
             falseState={<Mic size={20} />}
-            tooltip={media.isMuted ? "Unmute" : "Mute"}
-            onPress={media.toggleAudio}
+            tooltip={!isAudioActive ? "Unmute" : "Mute"}
+            onPress={() => {
+              if (isAudioActive) {
+                meetingStreaming.self.disableAudio();
+              } else {
+                meetingStreaming.self.enableAudio();
+              }
+            }}
           />
           <ToolTipIconButton
             currentState={media.isPaused}
             trueState={<CameraOff size={20} />}
             falseState={<Video size={20} />}
-            tooltip={media.isPaused ? "Show Camera" : "Hide Camera"}
-            onPress={media.toggleVideo}
+            tooltip={!isVideoActive ? "Show Camera" : "Hide Camera"}
+            onPress={() => {
+              if (isVideoActive) {
+                meetingStreaming.self.disableVideo();
+              } else {
+                meetingStreaming.self.enableVideo();
+              }
+            }}
           />
           <ToolTipIconButton
             currentState={meetingControls.isScreenSharing}
@@ -87,7 +124,10 @@ export default function BottomControls({
               tooltip={"Share Link"}
               onPress={async () => {}}
             />
-            <Dropdown.Popover placement="top" className={"bg-black"}>
+            <Dropdown.Popover
+              placement="top"
+              className={"bg-black text-white!"}
+            >
               <Dropdown.Menu
                 onAction={(key) => console.log(`Selected: ${key}`)}
               >
@@ -161,8 +201,10 @@ export default function BottomControls({
                     <Button
                       slot="close"
                       variant="danger"
-                      onClick={() => {
-                        meeting.leaveMeeting();
+                      onClick={async () => {
+                        if (await meeting.leaveMeeting()) {
+                          meetingStreaming.leaveRoom();
+                        }
                       }}
                     >
                       Leave Meeting

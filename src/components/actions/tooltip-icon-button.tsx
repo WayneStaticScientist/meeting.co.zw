@@ -22,7 +22,7 @@ export default function ToolTipIconButton(data: {
             ? data.trueState
             : data.falseState}
       </Button>
-      <Tooltip.Content className={"bg-black"}>
+      <Tooltip.Content className={"bg-black text-white"}>
         <p>{data.tooltip}</p>
       </Tooltip.Content>
     </Tooltip>
