@@ -36,8 +36,8 @@ export const useJoinMeetingHook = () => {
         variant: "tertiary",
       },
       description: `${user.displayName} wants to join your meeting`,
-      indicator: <UserRound />,
-      variant: "default",
+      indicator: <UserRound className="bg-green-400" />,
+      variant: "success",
     });
   }
 
