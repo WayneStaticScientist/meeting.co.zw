@@ -10,52 +10,54 @@ import {
   Video,
 } from "lucide-react";
 import ZLoader from "../displays/z-loader";
-import RTKClient from "@cloudflare/realtimekit";
+import { Toaster } from "@/utils/toast-marker";
 import { useSessionState } from "@/stores/session-store";
 import { useMeetingStore } from "@/stores/meeting-store";
-import { useMediaStream } from "@/stores/media-stream-store";
 import ToolTipIconButton from "../actions/tooltip-icon-button";
 import { useWaitingListStore } from "@/stores/waiting-list-store";
 import { AlertDialog, Button, Dropdown, Label } from "@heroui/react";
 import { useMeetingControlsStore } from "@/stores/use-meeting-control";
-import { Toaster } from "@/utils/toast-marker";
-import { useEffect, useState } from "react";
+import { useLocalParticipant, useRoomContext } from "@livekit/components-react";
 
 export default function BottomControls({
   setActiveSidebar,
   activeSidebar,
-  meetingStreaming,
+  setToken,
 }: {
+  setToken: (token: string) => void;
   setActiveSidebar: (act: string) => void;
   activeSidebar: string;
-  meetingStreaming: RTKClient;
 }) {
-  const media = useMediaStream();
+  const {
+    localParticipant,
+    isMicrophoneEnabled,
+    isCameraEnabled,
+    isScreenShareEnabled,
+  } = useLocalParticipant();
+  const room = useRoomContext();
   const session = useSessionState();
   const meeting = useMeetingStore();
   const waiters = useWaitingListStore();
   const meetingControls = useMeetingControlsStore();
-  const [isAudioActive, setIsAudioActive] = useState(
-    meetingStreaming.self.audioEnabled,
-  );
-  const [isVideoActive, setIsVideoActive] = useState(
-    meetingStreaming.self.videoEnabled,
-  );
+  // 1. Toggle Audio
+  const toggleMicrophone = async () => {
+    await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+  };
 
-  useEffect(() => {
-    const handleTrackUpdate = () => {
-      setIsAudioActive(meetingStreaming.self.audioEnabled);
-      setIsVideoActive(meetingStreaming.self.videoEnabled);
-    };
+  // 2. Toggle Video
+  const toggleCamera = async () => {
+    await localParticipant.setCameraEnabled(!isCameraEnabled);
+  };
 
-    // Listen for changes (Verify event names in RTK docs, usually 'trackPublished' or 'trackUpdated')
-    meetingStreaming.self.on("audioUpdate", handleTrackUpdate);
-    meetingStreaming.self.on("videoUpdate", handleTrackUpdate);
-    return () => {
-      meetingStreaming.self.off("audioUpdate", handleTrackUpdate);
-      meetingStreaming.self.off("videoUpdate", handleTrackUpdate);
-    };
-  }, [meetingStreaming]);
+  // 3. Toggle Screen Share
+  const toggleScreen = async () => {
+    try {
+      // Note: Browsers will show a popup to pick a window
+      await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
+    } catch (e) {
+      console.error("Screen share cancelled or failed", e);
+    }
+  };
   function shareLink(): void {
     const inviteUrl = `${window.location.origin}/meeting/${meeting.meeting?.meetingCode}`;
     navigator.clipboard.writeText(inviteUrl);
@@ -76,33 +78,21 @@ export default function BottomControls({
       <div className="bg-zinc-900/90 lg:flex-row! flex gap-3 backdrop-blur-2xl border border-white/10 px-4 py-2.5 rounded-2xl flex-col gap-y-4 items-center shadow-2xl">
         <div className="flex justify-between gap-4 lg:justify-start">
           <ToolTipIconButton
-            currentState={media.isMuted}
+            currentState={!isMicrophoneEnabled}
             trueState={<MicOff size={20} />}
             falseState={<Mic size={20} />}
-            tooltip={!isAudioActive ? "Unmute" : "Mute"}
-            onPress={() => {
-              if (isAudioActive) {
-                meetingStreaming.self.disableAudio();
-              } else {
-                meetingStreaming.self.enableAudio();
-              }
-            }}
+            tooltip={!isMicrophoneEnabled ? "Unmute" : "Mute"}
+            onPress={toggleMicrophone}
           />
           <ToolTipIconButton
-            currentState={media.isPaused}
+            currentState={!isCameraEnabled}
             trueState={<CameraOff size={20} />}
             falseState={<Video size={20} />}
-            tooltip={!isVideoActive ? "Show Camera" : "Hide Camera"}
-            onPress={() => {
-              if (isVideoActive) {
-                meetingStreaming.self.disableVideo();
-              } else {
-                meetingStreaming.self.enableVideo();
-              }
-            }}
+            tooltip={!isCameraEnabled ? "Show Camera" : "Hide Camera"}
+            onPress={toggleCamera}
           />
           <ToolTipIconButton
-            currentState={meetingControls.isScreenSharing}
+            currentState={isScreenShareEnabled}
             trueState={<Monitor size={20} />}
             falseState={<Monitor size={20} />}
             tooltip={
@@ -110,12 +100,7 @@ export default function BottomControls({
                 ? "Hide Screen Share"
                 : "Show Screen Sharing"
             }
-            onPress={async () => {
-              meetingControls.setIsScreenSharing(
-                !meetingControls.isScreenSharing,
-              );
-              meetingControls.setIsWhiteboardActive(false);
-            }}
+            onPress={toggleScreen}
           />
           <Dropdown>
             <ToolTipIconButton
@@ -203,7 +188,8 @@ export default function BottomControls({
                       variant="danger"
                       onClick={async () => {
                         if (await meeting.leaveMeeting()) {
-                          meetingStreaming.leaveRoom();
+                          room.disconnect();
+                          setToken("");
                         }
                       }}
                     >

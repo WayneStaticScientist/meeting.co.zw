@@ -5,22 +5,22 @@ import React from "react";
 import { useParams } from "next/navigation";
 import VideoGrid from "@/components/meeting/video-grid";
 import { useMeetingStore } from "@/stores/meeting-store";
-import ChatInput from "@/components/meeting/chat-input";
 import { useJoinMeetingHook } from "@/hooks/join-meeting-hook";
 import BottomControls from "@/components/meeting/bottom-controls";
 import { ZMeetLoader } from "@/components/loaders/meeting-loader";
-import { RealtimeKitProvider } from "@cloudflare/realtimekit-react";
-import MeetingChatsLayout from "@/components/meeting/meeting-chats-layout";
-import MeetingParticipants from "@/components/meeting/meeting-participants-layout";
-import MeetingWaitingRoom from "@/components/meeting/meeting-waiting-room";
 import { ShieldCheck, LayoutGrid, Maximize2, X } from "lucide-react";
-import { RtkChat } from "@cloudflare/realtimekit-react-ui";
+import MeetingWaitingRoom from "@/components/meeting/meeting-waiting-room";
+import MeetingParticipants from "@/components/meeting/meeting-participants-layout";
+import { LiveKitRoom } from "@livekit/components-react";
+import ChatInput from "@/components/meeting/chat-input";
+import MeetingChatsLayout from "@/components/meeting/meeting-chats-layout";
 
 export default function MeetingRoom() {
   const params = useParams();
+
   const [activeSidebar, setActiveSidebar] = useState("none");
   const [date, setDate] = useState<Date | null>(null);
-  const { meeting, mediaState } = useJoinMeetingHook();
+  const { token, setToken } = useJoinMeetingHook();
   const meetingStore = useMeetingStore();
 
   useEffect(() => {
@@ -28,17 +28,18 @@ export default function MeetingRoom() {
     setDate(new Date());
   }, [params.id as string]);
 
-  if (
-    meetingStore.meeting == null ||
-    mediaState == "connecting" ||
-    mediaState == "disconnected" ||
-    mediaState === "failed"
-  ) {
+  if (token == "") {
     return <ZMeetLoader />;
   }
   return (
     <React.Fragment>
-      <RealtimeKitProvider value={meeting}>
+      <LiveKitRoom
+        video={true}
+        audio={true}
+        token={token}
+        connect={true}
+        serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+      >
         <div className="h-screen w-full bg-[#0a0a0a] text-zinc-100 flex flex-col overflow-hidden select-none">
           {/* Top Bar: Minimalist */}
 
@@ -76,18 +77,12 @@ export default function MeetingRoom() {
               <div className="flex-1 p-4 flex gap-4 min-h-0 overflow-hidden">
                 {/* Primary Content (Screen Share or Whiteboard) */}
                 <VideoGrid />
-                {/* Participants Grid */}
-                <MeetingParticipants
-                  isScreenSharing={false}
-                  isWhiteboardActive={false}
-                  camOn={false}
-                />
               </div>
 
               <BottomControls
                 setActiveSidebar={setActiveSidebar}
                 activeSidebar={activeSidebar}
-                meetingStreaming={meeting}
+                setToken={setToken}
               />
             </div>
 
@@ -108,13 +103,16 @@ export default function MeetingRoom() {
 
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                   {activeSidebar === "chat" ? (
-                    <RtkChat meeting={meeting} />
+                    <>
+                      <MeetingChatsLayout />
+                    </>
                   ) : (
+                    // <RtkChat meeting={meeting} />
                     <MeetingWaitingRoom />
                   )}
                 </div>
 
-                {/* {activeSidebar === "chat" && <ChatInput />} */}
+                {activeSidebar === "chat" && <ChatInput />}
               </div>
             )}
           </div>
@@ -133,7 +131,7 @@ export default function MeetingRoom() {
             }}
           />
         </div>
-      </RealtimeKitProvider>
+      </LiveKitRoom>
     </React.Fragment>
   );
 }

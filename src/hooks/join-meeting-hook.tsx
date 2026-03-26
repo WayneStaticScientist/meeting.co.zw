@@ -11,14 +11,15 @@ import { useMeetingStore } from "@/stores/meeting-store";
 import { useSessionState } from "@/stores/session-store";
 import { useWaitingListStore } from "@/stores/waiting-list-store";
 import { useRealtimeKitClient } from "@cloudflare/realtimekit-react";
+import { Chats, useMessages } from "@/stores/chats-store";
 
 export const useJoinMeetingHook = () => {
+  const [token, setToken] = useState("");
+  const chatMessages = useMessages();
   const { isConnected, socket } = useSocket();
   const session = useSessionState();
   const waiting = useWaitingListStore();
   const meetingStore = useMeetingStore();
-  const [meeting, initMeeting] = useRealtimeKitClient();
-  const [mediaState, setMediaState] = useState<string | null>(null);
   function canUserJoin(user: Participant) {
     if (waiting.pass(user.userId)) return;
     if (meetingStore.pass(user.userId)) return;
@@ -40,36 +41,13 @@ export const useJoinMeetingHook = () => {
       variant: "success",
     });
   }
-
-  async function startNeeting(meeting: Meeting, _id: string) {
-    try {
-      const response = await api.post("/meetings/join/room", {
-        userId: _id,
-        meetingCode: meeting.meetingCode,
-      });
-      const result = await initMeeting({
-        authToken: response.data.authToken,
-      });
-      result?.join();
-    } catch (error) {}
-  }
   async function joinMeeting(_meeting: Meeting, _id: string) {
-    if (mediaState === "connected" || mediaState === "connecting") {
-      return;
-    }
     try {
       const response = await api.post("/meetings/join/room/participant", {
         userId: _id,
         meetingCode: _meeting.meetingCode,
-        defaults: {
-          audio: true, // Force mic on by default
-          video: true, // Force cam on by default
-        },
       });
-      const result = await initMeeting({
-        authToken: response.data.authToken,
-      });
-      result?.join();
+      setToken(response.data.authToken);
     } catch (error) {
       Toaster.error(`Error ${error}`);
       console.log(error);
@@ -77,17 +55,13 @@ export const useJoinMeetingHook = () => {
   }
   useEffect(() => {
     if (!meetingStore.meeting || !isConnected) return;
-    if (!session._id) return;
-    if (meetingStore.meeting.meetingId) {
-      socket.emit("i-wanna-join", {
-        meetingId: meetingStore.meeting.meetingId,
-        meetingCode: meetingStore.meeting.meetingCode,
-        userId: session._id,
-      });
-      return;
-    }
-    if (meetingStore.meeting.host != session._id) return;
-    startNeeting(meetingStore.meeting, session._id);
+    if (!session._id || token.length > 0) return;
+    socket.emit("i-wanna-join", {
+      meetingId: meetingStore.meeting.meetingId,
+      meetingCode: meetingStore.meeting.meetingCode,
+      userId: session._id,
+    });
+    return;
   }, [meetingStore.meeting, session._id, isConnected]);
 
   useEffect(() => {
@@ -95,42 +69,25 @@ export const useJoinMeetingHook = () => {
     socket.on("join-meeting", () => {
       joinMeeting(meetingStore.meeting!, session._id);
     });
-    socket.on("close-meeting", () => {
-      meeting.leaveRoom();
-      meetingStore.closeMeeting();
-    });
+    // socket.on("close-meeting", () => {
+    //   meeting.leaveRoom();
+    //   meetingStore.closeMeeting();
+    // });
     socket.on("updated-participants", (participants: Participant[]) => {
       meetingStore.updateParticipants(participants);
+    });
+    socket.on("new-chat-message", (msg: Chats) => {
+      chatMessages.addMessage(msg);
+      toast.success("New Message from " + msg.displayName, {});
     });
     return () => {
       socket.off("close-meeting");
       socket.off("updated-participants");
       socket.off("join-meeting");
+      socket.off("new-chat-message");
     };
-  }, [meetingStore.meeting, session._id, isConnected, meeting]);
+  }, [meetingStore.meeting, session._id, isConnected]);
 
-  useEffect(() => {
-    if (meeting) {
-      const handleMediaConnection = ({
-        transport,
-        state,
-      }: {
-        transport: string;
-        state: string;
-      }) => {
-        setMediaState(state);
-        // transport - 'consuming' | 'producing'
-        // state - 'new' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting' | 'failed'
-        console.log(`Media connection ${transport} is now ${state}`);
-      };
-
-      meeting.meta.on("mediaConnectionUpdate", handleMediaConnection);
-
-      return () => {
-        meeting.meta.off("mediaConnectionUpdate", handleMediaConnection);
-      };
-    }
-  }, [meeting]);
   useEffect(() => {
     if (!meetingStore.meeting || !session._id || !isConnected) return;
     if (session._id != meetingStore.meeting.host) return;
@@ -141,5 +98,5 @@ export const useJoinMeetingHook = () => {
       socket.off("can-user-join");
     };
   }, [meetingStore.meeting, session._id, isConnected]);
-  return { startNeeting, joinMeeting, meeting, mediaState };
+  return { joinMeeting, token, setToken };
 };
