@@ -27,7 +27,7 @@ export default function MeetingRoom() {
   useEffect(() => {
     if (!isConnected || !meetingStore.meeting) return;
     socket.on(meetingStore.meeting!.meetingCode, (data) => {
-      Toaster.success(data);
+      Toaster.success("Meeting started");
       if (data.started) {
         window.location.reload();
       }
