@@ -9,9 +9,8 @@ import { Participant } from "@/types/participant";
 import { useSocket } from "@/providers/socket-provider";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useSessionState } from "@/stores/session-store";
-import { useWaitingListStore } from "@/stores/waiting-list-store";
-import { useRealtimeKitClient } from "@cloudflare/realtimekit-react";
 import { Chats, useMessages } from "@/stores/chats-store";
+import { useWaitingListStore } from "@/stores/waiting-list-store";
 
 export const useJoinMeetingHook = () => {
   const [token, setToken] = useState("");
@@ -55,7 +54,7 @@ export const useJoinMeetingHook = () => {
   }
   useEffect(() => {
     if (!meetingStore.meeting || !isConnected) return;
-    if (!session._id || token.length > 0) return;
+    if (!session._id || (token && token.length > 0)) return;
     socket.emit("i-wanna-join", {
       meetingId: meetingStore.meeting.meetingId,
       meetingCode: meetingStore.meeting.meetingCode,
@@ -69,13 +68,13 @@ export const useJoinMeetingHook = () => {
     socket.on("join-meeting", () => {
       joinMeeting(meetingStore.meeting!, session._id);
     });
-    // socket.on("close-meeting", () => {
-    //   meeting.leaveRoom();
-    //   meetingStore.closeMeeting();
-    // });
+    socket.on("close-meeting", () => {
+      meetingStore.leaveMeeting();
+    });
     socket.on("updated-participants", (participants: Participant[]) => {
       meetingStore.updateParticipants(participants);
     });
+
     socket.on("new-chat-message", (msg: Chats) => {
       chatMessages.addMessage(msg);
       toast.success("New Message from " + msg.displayName, {});

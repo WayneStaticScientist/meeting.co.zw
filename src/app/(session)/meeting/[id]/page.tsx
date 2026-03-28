@@ -4,20 +4,19 @@ import { useEffect, useState } from "react";
 import React from "react";
 import { useParams } from "next/navigation";
 import VideoGrid from "@/components/meeting/video-grid";
+import { LiveKitRoom } from "@livekit/components-react";
+import ChatInput from "@/components/meeting/chat-input";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useJoinMeetingHook } from "@/hooks/join-meeting-hook";
 import BottomControls from "@/components/meeting/bottom-controls";
 import { ZMeetLoader } from "@/components/loaders/meeting-loader";
 import { ShieldCheck, LayoutGrid, Maximize2, X } from "lucide-react";
 import MeetingWaitingRoom from "@/components/meeting/meeting-waiting-room";
-import MeetingParticipants from "@/components/meeting/meeting-participants-layout";
-import { LiveKitRoom } from "@livekit/components-react";
-import ChatInput from "@/components/meeting/chat-input";
 import MeetingChatsLayout from "@/components/meeting/meeting-chats-layout";
+import MeetingLobby from "@/components/layouts/waiting-for-meeting";
 
 export default function MeetingRoom() {
   const params = useParams();
-
   const [activeSidebar, setActiveSidebar] = useState("none");
   const [date, setDate] = useState<Date | null>(null);
   const { token, setToken } = useJoinMeetingHook();
@@ -28,9 +27,13 @@ export default function MeetingRoom() {
     setDate(new Date());
   }, [params.id as string]);
 
-  if (token == "") {
+  if (meetingStore.meeting && meetingStore.meeting.status == "Scheduled") {
+    return <MeetingLobby />;
+  }
+  if (!token) {
     return <ZMeetLoader />;
   }
+
   return (
     <React.Fragment>
       <LiveKitRoom

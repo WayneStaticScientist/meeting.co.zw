@@ -1,14 +1,26 @@
+"use client";
 import { ModalWrapper } from "./modal";
-import { Calendar, Check, Clock, Plus, Search, X } from "lucide-react";
+import { useCreateRoom } from "@/hooks/create-room-hook";
+import { Calendar, Check, Globe, X, Lock } from "lucide-react";
+import { useState } from "react";
+import ZLoader from "../displays/z-loader";
 
 export default function ScheduleMeetingModal({
   closeModal,
 }: {
   closeModal: () => void;
 }) {
+  const room = useCreateRoom();
+  const [roomName, setRoomName] = useState("");
   return (
     <ModalWrapper onClose={closeModal}>
-      <div className="relative w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-[3rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row overflow-hidden animate-in slide-in-from-bottom-20 duration-500 h-[90vh]">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          room.scheduleRoom(roomName);
+        }}
+        className="relative w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-[3rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row overflow-hidden animate-in slide-in-from-bottom-20 duration-500 h-[90vh]"
+      >
         <button
           onClick={closeModal}
           className="absolute top-6 right-6 p-2 bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-600 dark:text-zinc-300 rounded-full transition-colors z-20"
@@ -25,40 +37,33 @@ export default function ScheduleMeetingModal({
                 Meeting Title
               </label>
               <input
+                required
                 type="text"
+                value={roomName}
                 placeholder="Design Review..."
+                onChange={(e) => setRoomName(e.target.value)}
                 className="w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl p-4 font-bold outline-none focus:border-emerald-500"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-3">
+            <div className="flex">
+              <div className="space-y-3 w-full">
                 <label className="text-xs font-black uppercase tracking-widest text-zinc-400">
-                  Date
+                  Date And Time
                 </label>
-                <div className="relative">
+                <div className="relative w-full">
                   <Calendar
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
                     size={18}
                   />
                   <input
-                    type="date"
+                    required
+                    type="datetime-local"
                     className="w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl p-4 pl-12 font-bold outline-none"
-                  />
-                </div>
-              </div>
-              <div className="space-y-3">
-                <label className="text-xs font-black uppercase tracking-widest text-zinc-400">
-                  Time
-                </label>
-                <div className="relative">
-                  <Clock
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                    size={18}
-                  />
-                  <input
-                    type="time"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl p-4 pl-12 font-bold outline-none"
+                    onChange={(e) => {
+                      const localDate = new Date(e.target.value);
+                      room.setMeetingDate(localDate.toISOString());
+                    }}
                   />
                 </div>
               </div>
@@ -69,10 +74,14 @@ export default function ScheduleMeetingModal({
                 Duration
               </label>
               <div className="flex gap-3">
-                {["15m", "30m", "1h", "2h"].map((d) => (
+                {["15m", "30m", "1h", "2h", "2h+"].map((d) => (
                   <button
                     key={d}
-                    className={`flex-1 py-3 rounded-xl text-xs font-black border-2 transition-all ${d === "1h" ? "bg-emerald-600 border-emerald-600 text-white" : "bg-zinc-50 dark:bg-zinc-800 border-transparent text-zinc-400 hover:border-zinc-200"}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      room.setDuration(d);
+                    }}
+                    className={`flex-1 py-3 rounded-xl text-xs font-black border-2 transition-all ${d === room.duration ? "bg-emerald-600 border-emerald-600 text-white" : "bg-zinc-50 dark:bg-zinc-800 border-transparent text-zinc-400 hover:border-zinc-200"}`}
                   >
                     {d}
                   </button>
@@ -84,44 +93,79 @@ export default function ScheduleMeetingModal({
 
         {/* Right: Guest List */}
         <div className="w-full md:w-80 bg-zinc-50 dark:bg-zinc-800/50 p-8 pt-16 md:pt-8 border-l border-zinc-100 dark:border-zinc-800 flex flex-col relative">
-          <h3 className="text-lg font-black mb-6">Invite Guests</h3>
-          <div className="relative mb-6">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
-              size={16}
-            />
-            <input
-              type="text"
-              placeholder="Name or email"
-              className="w-full bg-white dark:bg-zinc-900 border-none rounded-xl py-2.5 pl-10 text-xs font-medium"
-            />
-          </div>
-
-          <div className="flex-1 space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-zinc-200 overflow-hidden">
-                    <img src={`https://i.pravatar.cc/100?u=${i}`} alt="user" />
-                  </div>
-                  <p className="text-xs font-bold">User {i}</p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  room?.setIsPublic(false);
+                }}
+                className={`flex items-center gap-3 p-3 md:p-4 rounded-2xl md:rounded-3xl border-2 transition-all ${
+                  !room?.isPublic
+                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10"
+                    : "border-zinc-100 dark:border-zinc-800 bg-transparent opacity-60 hover:opacity-100"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-xl ${!room?.isPublic ? "bg-emerald-500 text-white" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500"}`}
+                >
+                  <Lock size={18} />
                 </div>
-                <button className="p-1.5 text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                  <Plus size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
+                <div className="text-left">
+                  <p
+                    className={`text-sm font-black ${!room?.isPublic ? "text-emerald-900 dark:text-emerald-100" : "text-zinc-500"}`}
+                  >
+                    Private
+                  </p>
+                </div>
+              </button>
 
-          <button
-            onClick={closeModal}
-            className="w-full bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white font-black py-4 rounded-2xl mt-8 shadow-xl shadow-zinc-900/20 flex items-center justify-center gap-2"
-          >
-            Confirm Event
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  room?.setIsPublic(true);
+                }}
+                className={`flex items-center gap-3 p-3 md:p-4 rounded-2xl md:rounded-3xl border-2 transition-all ${
+                  room?.isPublic
+                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10"
+                    : "border-zinc-100 dark:border-zinc-800 bg-transparent opacity-60 hover:opacity-100"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-xl ${room?.isPublic ? "bg-emerald-500 text-white" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500"}`}
+                >
+                  <Globe size={18} />
+                </div>
+                <div className="text-left">
+                  <p
+                    className={`text-sm font-black ${room?.isPublic ? "text-emerald-900 dark:text-emerald-100" : "text-zinc-500"}`}
+                  >
+                    Public
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            {/* Status Notice */}
+            <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-dashed border-zinc-200 dark:border-zinc-700">
+              <div className="flex gap-3">
+                <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                  <span className="font-black text-zinc-700 dark:text-zinc-200 mr-1 italic">
+                    {room?.isPublic ? "Public Meeting:" : "Private Meeting:"}
+                  </span>
+                  {room?.isPublic
+                    ? "Meeting will be available to anyone (registered) on the dashboard, searchable and listable."
+                    : "You have to share the meeting link; otherwise, it's not visible on the dashboard."}
+                </p>
+              </div>
+            </div>
+          </div>
+          <button className="w-full bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white font-black py-4 rounded-2xl mt-8 shadow-xl shadow-zinc-900/20 flex items-center justify-center gap-2">
+            {room.loading ? <ZLoader /> : "Confirm Event"}
             <Check size={18} />
           </button>
         </div>
-      </div>
+      </form>
     </ModalWrapper>
   );
 }
