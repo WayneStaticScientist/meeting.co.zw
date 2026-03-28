@@ -2,35 +2,44 @@
 
 import { useState } from "react";
 import { Send } from "lucide-react";
+import { useChat } from "@livekit/components-react";
 import { useSocket } from "@/providers/socket-provider";
-import { Chats, useMessages } from "@/stores/chats-store";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useSessionState } from "@/stores/session-store";
+import { Chats, useMessages } from "@/stores/chats-store";
+import { Toaster } from "@/utils/toast-marker";
 
 export default function chatInput() {
-  const session = useSessionState();
-  const meetingStore = useMeetingStore();
-  const { addMessage } = useMessages();
+  const message = useMessages();
+  const sessionStore = useSessionState();
   const { socket, isConnected } = useSocket();
   const [chatInput, setChatInput] = useState("");
-  const sendMessage = (e: React.ChangeEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!isConnected) return;
-    const chat: Chats = {
-      userId: session._id,
-      message: chatInput,
-      displayName: `${session.firstName} ${session.lastName}`,
-    };
+  const meeting = useMeetingStore();
+  const sendMessage = (msg: Chats) => {
+    if (!isConnected) {
+      return Toaster.error("Message sent failed please try again later");
+    }
     socket.emit("on-event-message", {
-      ...chat,
-      meetingCode: meetingStore.meeting!.meetingCode,
+      ...msg,
+      meetingCode: meeting.meeting!.meetingCode,
     });
-    addMessage(chat);
-    setChatInput("");
   };
   return (
     <div className="p-4 border-t border-white/5">
-      <form onSubmit={sendMessage} className="relative">
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const chat: Chats = {
+            message: chatInput.trim(),
+            displayName: `${sessionStore.firstName} ${sessionStore.lastName}`,
+            userId: sessionStore._id,
+          };
+          await sendMessage(chat);
+          message.addMessage(chat);
+          setChatInput("");
+        }}
+        className="relative"
+      >
         <input
           type="text"
           value={chatInput}

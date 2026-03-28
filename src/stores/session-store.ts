@@ -1,9 +1,20 @@
 "use client";
 import { create } from "zustand";
 import api from "../../interceptior";
+import { initializeApp } from "firebase/app";
 import { Toaster } from "@/utils/toast-marker";
 import { immer } from "zustand/middleware/immer";
 import initialUserState, { User } from "@/types/user";
+import { getMessaging, getToken } from "firebase/messaging";
+export const firebaseConfig = {
+  apiKey: "AIzaSyBIuccc_5plQWbfbpcFjJH_SPORf5BjHMA",
+  authDomain: "cloud-meeting-c3b80.firebaseapp.com",
+  projectId: "cloud-meeting-c3b80",
+  storageBucket: "cloud-meeting-c3b80.firebasestorage.app",
+  messagingSenderId: "341999955537",
+  appId: "1:341999955537:web:3880b187dfbd1f3fae1270",
+  measurementId: "G-MHYNFJBE9Y",
+};
 interface UserActions {
   register: () => void;
   login: () => void;
@@ -71,8 +82,22 @@ export const useSessionState = create<User & UserActions>()(
       try {
         const response = await api.post("/users/tokens", get());
         const { accessToken, refreshToken, user } = response.data;
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
         UserStore.setTokens(accessToken, refreshToken);
         UserStore.setUser(user);
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          const token = await getToken(messaging, {
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+          });
+          if (token && token.length > 0 && token != (user as User).chatToken) {
+            const chatTokenResponse = await api.put("/users/chat-token", {
+              chatToken: token,
+            });
+            UserStore.setUser(chatTokenResponse.data.user);
+          }
+        }
         set((state) => {
           state.verifiedSession = true;
         });
