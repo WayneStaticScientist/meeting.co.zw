@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import {
   Calendar,
   Clock,
@@ -7,11 +6,10 @@ import {
   Video,
   ChevronRight,
   ShieldCheck,
-  Loader2,
   Lock,
-  ArrowRight,
   AlertCircle,
 } from "lucide-react";
+import ZLoader from "../displays/z-loader";
 import { useMeetingStore } from "@/stores/meeting-store";
 import { useSessionState } from "@/stores/session-store";
 
@@ -21,9 +19,6 @@ const MeetingLobby = () => {
   // Mock data based on your interface
   const meeting = useMeetingStore();
   const session = useSessionState();
-  const [requestStatus, setRequestStatus] = useState<
-    "idle" | "pending" | "granted"
-  >("idle");
 
   // Format the date/time
   const eventDate = new Date(meeting.meeting!.scheduleTime!);
@@ -196,6 +191,9 @@ const MeetingLobby = () => {
               (e) => e.userId == session._id,
             ) && (
               <button
+                onClick={() => {
+                  meeting.requestToJoinScheduledMeeting(session._id);
+                }}
                 disabled={meeting.meeting!.status === "Ended"}
                 className={`group w-full font-black py-4.5 px-6 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-xl active:scale-[0.97]
                   ${
@@ -204,10 +202,15 @@ const MeetingLobby = () => {
                       : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/20"
                   }`}
               >
-                <span className="uppercase tracking-widest text-sm">
-                  Request Access
-                </span>
-                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {meeting.requestingAccess && <ZLoader />}
+                {!meeting.requestingAccess && (
+                  <>
+                    <span className="uppercase tracking-widest text-sm">
+                      Request Access
+                    </span>
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </button>
             )}
           </div>

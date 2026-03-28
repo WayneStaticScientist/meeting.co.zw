@@ -4,6 +4,7 @@ export interface User {
   firstName: string;
   lastName: string;
   password?: string;
+  chatToken: string;
   phoneNumber: string;
   roles: string[];
   dateOfBirthday: string;
@@ -22,6 +23,7 @@ const initialUserState: User = {
   dateOfBirthday: "",
   idNumber: "",
   city: "",
+  chatToken: "",
 };
 
 export default initialUserState;

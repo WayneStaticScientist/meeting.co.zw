@@ -4,6 +4,7 @@ import { Meeting } from "@/types/meeting";
 import { Toaster } from "@/utils/toast-marker";
 import { immer } from "zustand/middleware/immer";
 import { Participant } from "@/types/participant";
+import { Tablet } from "lucide-react";
 
 export const useMeetingStore = create<{
   meeting?: Meeting | null;
@@ -16,18 +17,20 @@ export const useMeetingStore = create<{
   totalPages: number;
   meetings: Meeting[];
   totalMeetings: number;
+  requestingAccess: boolean;
   closeMeeting: () => void;
   currentAdmissionId: string;
   leaveMeeting: () => Promise<boolean>;
   pass: (userId: string) => boolean;
   fetchMeeting: (id: string) => void;
-  fetchMeetings: (page: number, limit?: number) => void;
   setRowsPerPage: (newRows: number) => void;
+  fetchMeetings: (page: number, limit?: number) => void;
+  requestToJoinScheduledMeeting: (userId: string) => void;
   updateParticipants: (participants: Participant[]) => void;
   admitParticipant: (participant: Participant) => Promise<string | undefined>;
 }>()(
   immer((set, get) => ({
-    meeting: undefined,
+    meetings: [],
     rejoin: true,
     totalPages: 0,
     loading: false,
@@ -35,8 +38,9 @@ export const useMeetingStore = create<{
     currentPage: 1,
     leaving: false,
     totalMeetings: 0,
+    meeting: undefined,
     currentAdmissionId: "",
-    meetings: [],
+    requestingAccess: false,
     setRowsPerPage: (newRows: number) => {
       set((state) => {
         state.rowsPerPage = newRows;
@@ -127,6 +131,7 @@ export const useMeetingStore = create<{
       }
       return false;
     },
+
     fetchMeetings: async (page = 1, limit?: number) => {
       try {
         set((state) => {
@@ -150,6 +155,26 @@ export const useMeetingStore = create<{
         set((state) => {
           state.loading = false;
         });
+      }
+    },
+    requestToJoinScheduledMeeting: async (userId: string) => {
+      try {
+        set((state) => {
+          state.requestingAccess = true;
+        });
+        const respone = await api.post("/meetings/room/participant-request", {
+          userId,
+          meetingCode: get().meeting!.meetingCode,
+        });
+        set((state) => {
+          state.meeting = respone.data.meeting;
+          state.requestingAccess = false;
+        });
+      } catch (e) {
+        set((state) => {
+          state.requestingAccess = false;
+        });
+        Toaster.errorHttp(e);
       }
     },
   })),

@@ -14,14 +14,25 @@ import { ShieldCheck, LayoutGrid, Maximize2, X } from "lucide-react";
 import MeetingWaitingRoom from "@/components/meeting/meeting-waiting-room";
 import MeetingChatsLayout from "@/components/meeting/meeting-chats-layout";
 import MeetingLobby from "@/components/layouts/waiting-for-meeting";
+import { useSocket } from "@/providers/socket-provider";
+import { Toaster } from "@/utils/toast-marker";
 
 export default function MeetingRoom() {
   const params = useParams();
+  const { socket, isConnected } = useSocket();
   const [activeSidebar, setActiveSidebar] = useState("none");
   const [date, setDate] = useState<Date | null>(null);
   const { token, setToken } = useJoinMeetingHook();
   const meetingStore = useMeetingStore();
-
+  useEffect(() => {
+    if (!isConnected || !meetingStore.meeting) return;
+    socket.on(meetingStore.meeting!.meetingCode, (data) => {
+      Toaster.success(data);
+      if (data.started) {
+        window.location.reload();
+      }
+    });
+  }, [isConnected, !meetingStore.meeting]);
   useEffect(() => {
     meetingStore.fetchMeeting(params.id as string);
     setDate(new Date());

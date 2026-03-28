@@ -26,7 +26,6 @@ export default function App() {
   const sessionState = useSessionState();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
-  // Modals Control State
   const [activeModal, setActiveModal] = useState<
     null | "new" | "join" | "schedule"
   >(null);
