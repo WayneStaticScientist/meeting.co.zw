@@ -25,7 +25,7 @@ export const useJoinMeetingHook = () => {
     waiting.addWaiter(user);
     toast(`${user.displayName} `, {
       actionProps: {
-        children: <p className="text-sm  text-green-500">Admit to meeting?</p>,
+        children: <p className="text-sm  text-green-500">Add</p>,
         onPress: async () => {
           toast.clear();
           const response = await meetingStore.admitParticipant(user);
