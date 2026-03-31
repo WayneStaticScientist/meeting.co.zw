@@ -74,7 +74,9 @@ export const useJoinMeetingHook = () => {
     socket.on("updated-participants", (participants: Participant[]) => {
       meetingStore.updateParticipants(participants);
     });
-
+    socket.on("highlight-node", (node: { focusNode: string }) => {
+      meetingStore.setFocusNode(node.focusNode);
+    });
     socket.on("new-chat-message", (msg: Chats) => {
       chatMessages.addMessage(msg);
       toast.success("New Message from " + msg.displayName, {});

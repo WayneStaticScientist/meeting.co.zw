@@ -4,11 +4,8 @@ import { Meeting } from "@/types/meeting";
 import { Toaster } from "@/utils/toast-marker";
 import { immer } from "zustand/middleware/immer";
 import { Participant } from "@/types/participant";
-import { Tablet } from "lucide-react";
 
 export const useMeetingStore = create<{
-  meeting?: Meeting | null;
-
   leaving: boolean;
   rejoin: boolean;
   loading: boolean;
@@ -17,12 +14,16 @@ export const useMeetingStore = create<{
   totalPages: number;
   meetings: Meeting[];
   totalMeetings: number;
+  updatingFocus: boolean;
+  meeting?: Meeting | null;
   requestingAccess: boolean;
   closeMeeting: () => void;
   currentAdmissionId: string;
-  leaveMeeting: () => Promise<boolean>;
   pass: (userId: string) => boolean;
   fetchMeeting: (id: string) => void;
+  setFocusNode(node: string): unknown;
+  leaveMeeting: () => Promise<boolean>;
+  updateFocusNode(node: string): unknown;
   setRowsPerPage: (newRows: number) => void;
   fetchMeetings: (page: number, limit?: number) => void;
   requestToJoinScheduledMeeting: (userId: string) => void;
@@ -39,8 +40,14 @@ export const useMeetingStore = create<{
     leaving: false,
     totalMeetings: 0,
     meeting: undefined,
+    updatingFocus: false,
     currentAdmissionId: "",
     requestingAccess: false,
+    setFocusNode: (node: string) => {
+      set((state) => {
+        state.meeting!.focuseNode = node;
+      });
+    },
     setRowsPerPage: (newRows: number) => {
       set((state) => {
         state.rowsPerPage = newRows;
@@ -154,6 +161,23 @@ export const useMeetingStore = create<{
       } catch (e) {
         set((state) => {
           state.loading = false;
+        });
+      }
+    },
+    updateFocusNode: async (focusNode?: string) => {
+      try {
+        set((state) => {
+          state.updatingFocus = true;
+        });
+        await api.put("/meetings/focus-node", {
+          meetingCode: get().meeting?.meetingCode,
+          focusNode,
+        });
+      } catch (e) {
+        Toaster.errorHttp(e);
+      } finally {
+        set((state) => {
+          state.updatingFocus = false;
         });
       }
     },
