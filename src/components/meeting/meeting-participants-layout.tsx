@@ -8,8 +8,6 @@ import { useSessionState } from "@/stores/session-store";
 import { useMediaStream } from "@/stores/media-stream-store";
 
 export default function MeetingParticipants({
-  isScreenSharing,
-  isWhiteboardActive,
   camOn,
 }: {
   isScreenSharing: boolean;
@@ -18,7 +16,7 @@ export default function MeetingParticipants({
 }) {
   const sessionStore = useSessionState();
   const { socket, isConnected } = useSocket();
-  const { localStream, startStream } = useMediaStream();
+  const { startStream } = useMediaStream();
 
   const { meeting } = useMeetingStore();
 

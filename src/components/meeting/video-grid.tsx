@@ -26,6 +26,7 @@ import ZLoader from "../displays/z-loader";
 export default function VideoGrid() {
   const sessionId = useSessionState();
   const meeting = useMeetingStore();
+
   const tracks = useTracks([
     { source: Track.Source.Camera, withPlaceholder: true },
   ]);
@@ -202,7 +203,6 @@ export function ParticipantTile({
                 <span className="text-blue-400 text-[10px] ml-1">(You)</span>
               )}
             </span>
-
             {isMuted && <MicOff size={14} className="text-red-500" />}
           </div>
 
@@ -280,39 +280,44 @@ export function ParticipantTile({
               </>
             )}
           </button>
-          {isLocal && (
-            <>
-              <div className="h-px bg-white/10 my-1" />
-              <button
-                onClick={() => {
-                  onToggleCam?.();
-                  setShowMenu(false);
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 flex items-center gap-3 transition-colors"
-              >
-                {isCameraEnabled ? (
-                  <CameraOff size={16} className="text-red-400" />
-                ) : (
-                  <Camera size={16} className="text-green-400" />
-                )}
-                {isCameraEnabled ? "Stop Video" : "Start Video"}
-              </button>
-              <button
-                onClick={() => {
-                  onToggleMic?.();
-                  setShowMenu(false);
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 flex items-center gap-3 transition-colors"
-              >
-                {isMuted ? (
-                  <Mic size={16} className="text-green-400" />
-                ) : (
-                  <MicOff size={16} className="text-red-400" />
-                )}
-                {isMuted ? "Unmute Mic" : "Mute Mic"}
-              </button>
-            </>
-          )}
+
+          <>
+            <div className="h-px bg-white/10 my-1" />
+            <button
+              onClick={() => {
+                meeting.sendMeetingCommand(
+                  isCameraEnabled ? "uncamera" : "camera",
+                  track.participant?.identity,
+                );
+                setShowMenu(false);
+              }}
+              className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 flex items-center gap-3 transition-colors"
+            >
+              {!isCameraEnabled ? (
+                <CameraOff size={16} className="text-red-400" />
+              ) : (
+                <Camera size={16} className="text-green-400" />
+              )}
+              {isCameraEnabled ? "Stop Video" : "Start Video"}
+            </button>
+            <button
+              onClick={() => {
+                meeting.sendMeetingCommand(
+                  isMuted ? "unmute" : "mute",
+                  track.participant?.identity,
+                );
+                setShowMenu(false);
+              }}
+              className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 flex items-center gap-3 transition-colors"
+            >
+              {!isMuted ? (
+                <Mic size={16} className="text-green-400" />
+              ) : (
+                <MicOff size={16} className="text-red-400" />
+              )}
+              {isMuted ? "Unmute Mic" : "Mute Mic"}
+            </button>
+          </>
         </div>
       )}
     </div>

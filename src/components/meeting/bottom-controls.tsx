@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   CameraOff,
   MessageSquare,
@@ -9,6 +10,7 @@ import {
   Users,
   Video,
 } from "lucide-react";
+
 import ZLoader from "../displays/z-loader";
 import { Toaster } from "@/utils/toast-marker";
 import { useSessionState } from "@/stores/session-store";
@@ -18,6 +20,7 @@ import { useWaitingListStore } from "@/stores/waiting-list-store";
 import { AlertDialog, Button, Dropdown, Label } from "@heroui/react";
 import { useMeetingControlsStore } from "@/stores/use-meeting-control";
 import { useLocalParticipant, useRoomContext } from "@livekit/components-react";
+import { useSocket } from "@/providers/socket-provider";
 
 export default function BottomControls({
   setActiveSidebar,
@@ -34,46 +37,123 @@ export default function BottomControls({
     isCameraEnabled,
     isScreenShareEnabled,
   } = useLocalParticipant();
+  const { socket, isConnected } = useSocket();
+
   const room = useRoomContext();
   const session = useSessionState();
   const meeting = useMeetingStore();
   const waiters = useWaitingListStore();
   const meetingControls = useMeetingControlsStore();
-  // 1. Toggle Audio
+
+  // --- Inactivity Logic ---
+  const [isVisible, setIsVisible] = useState(true);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showControls = useCallback(() => {
+    setIsVisible(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      if (activeSidebar === "none") {
+        setIsVisible(false);
+      }
+    }, 3000);
+  }, [activeSidebar]);
+
+  useEffect(() => {
+    showControls();
+    const activityEvents = [
+      "mousedown",
+      "mousemove",
+      "keypress",
+      "touchstart",
+      "scroll",
+    ];
+    const handleActivity = () => showControls();
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, handleActivity);
+    });
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      activityEvents.forEach((event) => {
+        window.removeEventListener(event, handleActivity);
+      });
+    };
+  }, [showControls]);
+
+  useEffect(() => {
+    if (activeSidebar !== "none") {
+      setIsVisible(true);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    } else {
+      showControls();
+    }
+  }, [activeSidebar, showControls]);
+  // -------------------------
+  useEffect(() => {
+    if (!isConnected || !meeting?.meeting || !session._id) return;
+    socket.on("meeting-command", (data: { command: string }) => {
+      if (session._id == meeting?.meeting?.host) return;
+      if (session._id === meeting?.meeting?.focuseNode) return;
+      if (data.command === "mute") {
+        localParticipant.setMicrophoneEnabled(false);
+      } else if (data.command === "unmute") {
+        localParticipant.setMicrophoneEnabled(true);
+      } else if (data.command === "camera") {
+        localParticipant.setCameraEnabled(false);
+      } else if (data.command === "uncamera") {
+        localParticipant.setCameraEnabled(true);
+      } else if (data.command === "unscreen") {
+        localParticipant.setScreenShareEnabled(true);
+      } else if (data.command === "remove") {
+        if (window) {
+          window.location.href = "/";
+        }
+      }
+    });
+    return () => {
+      socket.off("meeting-command");
+    };
+  }, [isConnected, meeting?.meeting, session._id]);
   const toggleMicrophone = async () => {
     await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
   };
 
-  // 2. Toggle Video
   const toggleCamera = async () => {
     await localParticipant.setCameraEnabled(!isCameraEnabled);
   };
 
-  // 3. Toggle Screen Share
   const toggleScreen = async () => {
     try {
-      // Note: Browsers will show a popup to pick a window
       await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
     } catch (e) {
       console.error("Screen share cancelled or failed", e);
     }
   };
+
   function shareLink(): void {
     const inviteUrl = `${window.location.origin}/meeting/${meeting.meeting?.meetingCode}`;
-    navigator.clipboard.writeText(inviteUrl);
-    Toaster.success("Link copied to clipboard");
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(inviteUrl);
+      Toaster.success("Link copied to clipboard");
+    }
   }
 
   function shareCode(): void {
-    navigator.clipboard.writeText(`${meeting.meeting?.meetingCode}`);
-    Toaster.success("Invation code copied to clipboard");
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(`${meeting.meeting?.meetingCode}`);
+      Toaster.success("Invitation code copied to clipboard");
+    }
   }
 
   return (
     <div
-      className={`fixed lg:absolute bottom-8 left-1/2 -translate-x-1/2 flex   justify-center items-center gap-3 z-50 ${
-        activeSidebar !== "none" ? "hidden lg:flex" : ""
-      }`}
+      className={`fixed lg:absolute bottom-8 left-1/2 -translate-x-1/2 flex justify-center items-center gap-3 z-50 transition-all duration-500 ${
+        isVisible
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 translate-y-10 pointer-events-none"
+      } ${activeSidebar !== "none" ? "hidden lg:flex" : ""}`}
     >
       <div className="bg-zinc-900/90 lg:flex-row! flex gap-3 backdrop-blur-2xl border border-white/10 px-4 py-2.5 rounded-2xl flex-col gap-y-4 items-center shadow-2xl">
         <div className="flex justify-between gap-4 lg:justify-start">
@@ -113,18 +193,16 @@ export default function BottomControls({
               placement="top"
               className={"bg-black text-white!"}
             >
-              <Dropdown.Menu
-                onAction={(key) => console.log(`Selected: ${key}`)}
-              >
+              <Dropdown.Menu>
                 <Dropdown.Item
-                  id="link"
+                  key="link"
                   textValue="Meet Link"
                   onClick={() => shareLink()}
                 >
                   <Label>Meeting Link</Label>
                 </Dropdown.Item>
                 <Dropdown.Item
-                  id="code"
+                  key="code"
                   textValue="Meeting Code"
                   onClick={() => shareCode()}
                 >
@@ -176,7 +254,7 @@ export default function BottomControls({
                     <p>
                       Are you sure you want to leave the meeting?
                       {meeting.meeting?.host == session._id &&
-                        "This will close the meeting for all participants"}
+                        " This will close the meeting for all participants"}
                     </p>
                   </AlertDialog.Body>
                   <AlertDialog.Footer>

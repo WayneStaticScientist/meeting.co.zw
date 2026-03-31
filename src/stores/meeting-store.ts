@@ -4,7 +4,13 @@ import { Meeting } from "@/types/meeting";
 import { Toaster } from "@/utils/toast-marker";
 import { immer } from "zustand/middleware/immer";
 import { Participant } from "@/types/participant";
-
+export type MeetingCommand =
+  | "mute"
+  | "unmute"
+  | "camera"
+  | "uncamera"
+  | "unscreen"
+  | "remove";
 export const useMeetingStore = create<{
   leaving: boolean;
   rejoin: boolean;
@@ -28,6 +34,7 @@ export const useMeetingStore = create<{
   fetchMeetings: (page: number, limit?: number) => void;
   requestToJoinScheduledMeeting: (userId: string) => void;
   updateParticipants: (participants: Participant[]) => void;
+  sendMeetingCommand: (command: MeetingCommand, targetUserId: string) => void;
   admitParticipant: (participant: Participant) => Promise<string | undefined>;
 }>()(
   immer((set, get) => ({
@@ -198,6 +205,20 @@ export const useMeetingStore = create<{
         set((state) => {
           state.requestingAccess = false;
         });
+        Toaster.errorHttp(e);
+      }
+    },
+    sendMeetingCommand: async (
+      command: MeetingCommand,
+      targetUserId: string,
+    ) => {
+      try {
+        await api.post("/meetings/command", {
+          meetingCode: get().meeting?.meetingCode,
+          command,
+          targetUserId,
+        });
+      } catch (e) {
         Toaster.errorHttp(e);
       }
     },
