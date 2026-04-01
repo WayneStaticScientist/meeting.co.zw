@@ -87,8 +87,8 @@ export default function SignUpLayout() {
           title={"Id Number"}
           Icon={IdCard}
           placeholder="63-xxxx-x"
-          name={"phoneNumber"}
-          value={formData.phoneNumber}
+          name={"idNumber"}
+          value={formData.idNumber}
           onchange={handleChange}
         />
 
