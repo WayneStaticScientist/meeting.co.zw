@@ -1,6 +1,7 @@
 import { Participant } from "./participant";
 
 export interface Meeting {
+  createdAt: string;
   host: any;
   duration: string;
   public: boolean;
