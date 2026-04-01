@@ -80,7 +80,9 @@ export default function SignUpLayout() {
           title={"Phone Number"}
           Icon={Phone}
           placeholder="+2637870001000"
-          name={""}
+          name={"phoneNumber"}
+          value={formData.phoneNumber}
+          onchange={handleChange}
         />
         <FormInput title={"City"} Icon={MapPin} placeholder="city" name={""} />
         <FormInput
