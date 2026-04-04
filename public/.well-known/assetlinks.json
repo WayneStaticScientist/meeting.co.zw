@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "aca.bicosatstudios.zanupfmeeting",
+      "sha256_cert_fingerprints": [
+        "67:0C:D9:F2:8A:D1:16:BD:20:34:8D:C0:A9:E0:ED:BD:66:C9:09:05:E4:CA:C3:F7:6E:B0:F8:85:15:27:80:1F"
+      ]
+    }
+  }
+]
